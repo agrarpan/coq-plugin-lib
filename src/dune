@@ -1,0 +1,9 @@
+(library
+ (name termutils)
+ (wrapped false)
+ (public_name synth.termutils)
+ (synopsis "Termutils library")
+ (flags :standard -rectypes -w -3-8-27-28-33)
+ (libraries coq.plugins.ltac))
+
+(include_subdirs unqualified)
