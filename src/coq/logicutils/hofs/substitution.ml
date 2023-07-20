@@ -117,7 +117,7 @@ let all_typ_substs_combs : (types * types) comb_substitution =
 
  (* --- Substituting global references --- *)
 
-type global_substitution = global_reference Globnames.Refmap.t
+type global_substitution = Globnames.global_reference Globnames.Refmap.t
 
 (* Substitute global references throughout a term *)
 let rec subst_globals subst (term : constr) =

@@ -154,16 +154,16 @@ let map_term_env_rec map_rec f d env sigma a trm =
      sigma, mkCast (c', k, t')
   | Prod (n, t, b) ->
      let sigma, t' = map_rec env sigma a t in
-     let sigma, b' = map_rec (push_local (n, t) env) sigma (d a) b in
+     let sigma, b' = map_rec (push_local (Context.binder_name n, t) env) sigma (d a) b in
      sigma, mkProd (n, t', b')
   | Lambda (n, t, b) ->
      let sigma, t' = map_rec env sigma a t in
-     let sigma, b' = map_rec (push_local (n, t) env) sigma (d a) b in
+     let sigma, b' = map_rec (push_local (Context.binder_name n, t) env) sigma (d a) b in
      sigma, mkLambda (n, t', b')
   | LetIn (n, trm, typ, e) ->
      let sigma, trm' = map_rec env sigma a trm in
      let sigma, typ' = map_rec env sigma a typ in
-     let sigma, e' = map_rec (push_let_in (n, e, typ) env) sigma (d a) e in
+     let sigma, e' = map_rec (push_let_in (Context.binder_name n, e, typ) env) sigma (d a) e in
      sigma, mkLetIn (n, trm', typ', e')
   | App (fu, args) ->
      let sigma, fu' = map_rec env sigma a fu in
@@ -176,11 +176,11 @@ let map_term_env_rec map_rec f d env sigma a trm =
      sigma, mkCase (ci, ct', m', bs')
   | Fix ((is, i), (ns, ts, ds)) ->
      let sigma, ts' = map_rec_args map_rec env sigma a ts in
-     let sigma, ds' = map_rec_args (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
+     let sigma, ds' = map_rec_args (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a (Array.map Context.binder_name ns) ts trm) env sigma a ds in (* TODO refactor *)
      sigma, mkFix ((is, i), (ns, ts', ds'))
   | CoFix (i, (ns, ts, ds)) ->
      let sigma, ts' = map_rec_args map_rec env sigma a ts in
-     let sigma, ds' = map_rec_args (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
+     let sigma, ds' = map_rec_args (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a (Array.map Context.binder_name ns) ts trm) env sigma a ds in (* TODO refactor *)
      sigma, mkCoFix (i, (ns, ts', ds'))
   | Proj (p, c) ->
      let sigma, c' = map_rec env sigma a c in
@@ -223,16 +223,16 @@ let map_subterms_env_rec map_rec f d env sigma a trm =
      sigma, combine_cartesian (fun c' t' -> mkCast (c', k, t')) cs' ts'
   | Prod (n, t, b) ->
      let sigma, ts' = map_rec env sigma a t in
-     let sigma, bs' = map_rec (push_local (n, t) env) sigma (d a) b in
+     let sigma, bs' = map_rec (push_local (Context.binder_name n, t) env) sigma (d a) b in
      sigma, combine_cartesian (fun t' b' -> mkProd (n, t', b')) ts' bs'
   | Lambda (n, t, b) ->
      let sigma, ts' = map_rec env sigma a t in
-     let sigma, bs' = map_rec (push_local (n, t) env) sigma (d a) b in
+     let sigma, bs' = map_rec (push_local (Context.binder_name n, t) env) sigma (d a) b in
      sigma, combine_cartesian (fun t' b' -> mkLambda (n, t', b')) ts' bs'
   | LetIn (n, trm, typ, e) ->
      let sigma, trms' = map_rec env sigma a trm in
      let sigma, typs' = map_rec env sigma a typ in
-     let sigma, es' = map_rec (push_let_in (n, e, typ) env) sigma (d a) e in
+     let sigma, es' = map_rec (push_let_in (Context.binder_name n, e, typ) env) sigma (d a) e in
      sigma, combine_cartesian (fun trm' (typ', e') -> mkLetIn (n, trm', typ', e')) trms' (cartesian typs' es')
   | App (fu, args) ->
      let sigma, fus' = map_rec env sigma a fu in
@@ -245,11 +245,11 @@ let map_subterms_env_rec map_rec f d env sigma a trm =
      sigma, combine_cartesian (fun ct' (m', bs') -> mkCase (ci, ct', m', bs')) cts' (cartesian ms' bss')
   | Fix ((is, i), (ns, ts, ds)) ->
      let sigma, tss' = map_rec_args_cartesian map_rec env sigma a ts in
-     let sigma, dss' = map_rec_args_cartesian (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
+     let sigma, dss' = map_rec_args_cartesian (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a (Array.map Context.binder_name ns) ts trm) env sigma a ds in (* TODO refactor *)
      sigma, combine_cartesian (fun ts' ds' -> mkFix ((is, i), (ns, ts', ds'))) tss' dss'
   | CoFix (i, (ns, ts, ds)) ->
      let sigma, tss' = map_rec_args_cartesian map_rec env sigma a ts in
-     let sigma, dss' = map_rec_args_cartesian (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
+     let sigma, dss' = map_rec_args_cartesian (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a (Array.map Context.binder_name ns) ts trm) env sigma a ds in (* TODO refactor *)
      sigma, combine_cartesian (fun ts' ds' -> mkCoFix (i, (ns, ts', ds'))) tss' dss'
   | Proj (p, c) ->
      let sigma, cs' = map_rec env sigma a c in
@@ -316,16 +316,16 @@ let map_term_env_rec_shallow map_rec f d env sigma a trm =
      sigma, mkCast (c', k, t')
   | Prod (n, t, b) ->
      let sigma, t' = map_rec env sigma a t in
-     let sigma, b' = map_rec (push_local (n, t) env) sigma (d a) b in
+     let sigma, b' = map_rec (push_local (Context.binder_name n, t) env) sigma (d a) b in
      sigma, mkProd (n, t', b')
   | Lambda (n, t, b) ->
      let sigma, t' = map_rec env sigma a t in
-     let sigma, b' = map_rec (push_local (n, t) env) sigma (d a) b in
+     let sigma, b' = map_rec (push_local (Context.binder_name n, t) env) sigma (d a) b in
      sigma, mkLambda (n, t', b')
   | LetIn (n, trm, typ, e) ->
      let sigma, trm' = map_rec env sigma a trm in
      let sigma, typ' = map_rec env sigma a typ in
-     let sigma, e' = map_rec (push_let_in (n, e, typ) env) sigma (d a) e in
+     let sigma, e' = map_rec (push_let_in (Context.binder_name n, e, typ) env) sigma (d a) e in
      sigma, mkLetIn (n, trm', typ', e')
   | App (fu, args) ->
      let sigma, fu' = map_rec env sigma a fu in
@@ -341,11 +341,11 @@ let map_term_env_rec_shallow map_rec f d env sigma a trm =
      sigma, mkCase (ci, ct', m', bs')
   | Fix ((is, i), (ns, ts, ds)) ->
      let sigma, ts' = map_rec_args map_rec env sigma a ts in
-     let sigma, ds' = map_rec_args (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
+     let sigma, ds' = map_rec_args (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a (Array.map Context.binder_name ns) ts trm) env sigma a ds in (* TODO refactor *)
      sigma, mkFix ((is, i), (ns, ts', ds'))
   | CoFix (i, (ns, ts, ds)) ->
      let sigma, ts' = map_rec_args map_rec env sigma a ts in
-     let sigma, ds' = map_rec_args (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
+     let sigma, ds' = map_rec_args (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a (Array.map Context.binder_name ns) ts trm) env sigma a ds in (* TODO refactor *)
      sigma, mkCoFix (i, (ns, ts', ds'))
   | Proj (p, c) ->
      let sigma, c' = map_rec env sigma a c in
@@ -495,16 +495,16 @@ let rec map_term_env_if_list p f d env sigma a trm =
        List.append c' t'
     | Prod (n, t, b) ->
        let t' = map_rec env sigma a t in
-       let b' = map_rec (push_local (n, t) env) sigma (d a) b in
+       let b' = map_rec (push_local (Context.binder_name n, t) env) sigma (d a) b in
        List.append t' b'
     | Lambda (n, t, b) ->
        let t' = map_rec env sigma a t in
-       let b' = map_rec (push_local (n, t) env) sigma (d a) b in
+       let b' = map_rec (push_local (Context.binder_name n, t) env) sigma (d a) b in
        List.append t' b'
     | LetIn (n, trm, typ, e) ->
        let trm' = map_rec env sigma a trm in
        let typ' = map_rec env sigma a typ in
-       let e' = map_rec (push_let_in (n, e, typ) env) sigma (d a) e in
+       let e' = map_rec (push_let_in (Context.binder_name n, e, typ) env) sigma (d a) e in
        List.append trm' (List.append typ' e')
     | App (fu, args) ->
        let fu' = map_rec env sigma a fu in
@@ -517,11 +517,11 @@ let rec map_term_env_if_list p f d env sigma a trm =
        List.append ct' (List.append m' (List.flatten (Array.to_list bs')))
     | Fix ((is, i), (ns, ts, ds)) ->
        let ts' = Array.map (map_rec env sigma a) ts in
-       let ds' = Array.map (map_rec_env_fix map_rec d env sigma a ns ts) ds in
+       let ds' = Array.map (map_rec_env_fix map_rec d env sigma a (Array.map Context.binder_name ns) ts) ds in
        List.append (List.flatten (Array.to_list ts')) (List.flatten (Array.to_list ds'))
     | CoFix (i, (ns, ts, ds)) ->
        let ts' = Array.map (map_rec env sigma a) ts in
-       let ds' = Array.map (map_rec_env_fix map_rec d env sigma a ns ts) ds in
+       let ds' = Array.map (map_rec_env_fix map_rec d env sigma a (Array.map Context.binder_name ns) ts) ds in
        List.append (List.flatten (Array.to_list ts')) (List.flatten (Array.to_list ds'))
     | Proj (pr, c) ->
        map_rec env sigma a c
@@ -580,16 +580,16 @@ let rec exists_subterm_env p d env sigma (a : 'a) (trm : types) : evar_map * boo
          sigma, c' || t'
       | Prod (n, t, b) ->
          let sigma, t' = map_rec env sigma a t in
-         let sigma, b' = map_rec (push_local (n, t) env) sigma (d a) b in
+         let sigma, b' = map_rec (push_local (Context.binder_name n, t) env) sigma (d a) b in
          sigma, t' || b'
       | Lambda (n, t, b) ->
          let sigma, t' = map_rec env sigma a t in
-         let sigma, b' = map_rec (push_local (n, t) env) sigma (d a) b in
+         let sigma, b' = map_rec (push_local (Context.binder_name n, t) env) sigma (d a) b in
          sigma, t' || b'
       | LetIn (n, trm, typ, e) ->
          let sigma, trm' = map_rec env sigma a trm in
          let sigma, typ' = map_rec env sigma a typ in
-         let sigma, e' = map_rec (push_let_in (n, e, typ) env) sigma (d a) e in
+         let sigma, e' = map_rec (push_let_in (Context.binder_name n, e, typ) env) sigma (d a) e in
          sigma, trm' || typ' || e'
       | App (fu, args) ->
          let sigma, fu' = map_rec env sigma a fu in

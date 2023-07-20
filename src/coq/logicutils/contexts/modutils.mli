@@ -30,9 +30,9 @@ val fold_module_structure_by_decl : 'a -> ('a -> Constant.t -> constant_body -> 
  * Same as `fold_module_structure_by_decl` except a single step function
  * accepting a global reference.
  *)
-val fold_module_structure_by_glob : 'a -> ('a -> global_reference -> 'a) -> module_body -> 'a
+val fold_module_structure_by_glob : 'a -> ('a -> Globnames.global_reference -> 'a) -> module_body -> 'a
 
 (*
  * Same as `fold_module_structure_by_glob` except an implicit unit accumulator.
  *)
-val iter_module_structure_by_glob : (global_reference -> unit) -> module_body -> unit
+val iter_module_structure_by_glob : (Globnames.global_reference -> unit) -> module_body -> unit

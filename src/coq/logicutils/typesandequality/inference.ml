@@ -9,19 +9,13 @@ open Declarations
              
 (* Safely infer the WHNF type of a term, updating the evar map *)
 let infer_type env sigma term =
-  let sigma_ref = ref sigma in
   let eterm = EConstr.of_constr term in
-  let typ = Typing.e_type_of ~refresh:true env sigma_ref eterm in
-  let sigma = ! sigma_ref in
-  sigma, EConstr.to_constr sigma typ
+  Typing.type_of ~refresh:true env sigma eterm
 
 (* Safely infer the sort of a type, updating the evar map *)
 let infer_sort env sigma term =
-  let sigma_ref = ref sigma in
   let eterm = EConstr.of_constr term in
-  let sort = Typing.e_sort_of env sigma_ref eterm in
-  let sigma = ! sigma_ref in
-  sigma, Sorts.family sort
+  Typing.sort_of env sigma eterm
 
 (* Get the type of an inductive type (TODO do we need evar_map here?) *)
 let type_of_inductive env index mutind_body : types =

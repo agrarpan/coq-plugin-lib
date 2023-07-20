@@ -16,13 +16,13 @@ open Constrexpr
  * (Refreshing universes is REALLY costly)
  *)
 val define_term :
-  ?typ:types -> Id.t -> evar_map -> types -> bool -> global_reference
+  ?typ:types -> Id.t -> evar_map -> types -> bool -> Globnames.global_reference
 
 (*
  * Like define_term, but for a canonical structure
  *)
 val define_canonical :
-  ?typ:types -> Id.t -> evar_map -> types -> bool -> global_reference
+  ?typ:types -> Id.t -> evar_map -> types -> bool -> Globnames.global_reference
 
 (* --- Converting between representations --- *)
 
@@ -55,19 +55,19 @@ val extern : env -> evar_map -> types -> constr_expr
 (* 
  * Construct the external expression for a definition.
  *)
-val expr_of_global : global_reference -> constr_expr
+val expr_of_global : Globnames.global_reference -> constr_expr
 
 (*
  * Convert a term into a global reference with universes (or raise Not_found) 
  *)
-val pglobal_of_constr : constr -> global_reference Univ.puniverses
+val pglobal_of_constr : constr -> Globnames.global_reference Univ.puniverses
 
 (* 
  * Convert a global reference with universes into a term
  *)
-val constr_of_pglobal : global_reference Univ.puniverses -> constr
+val constr_of_pglobal : Globnames.global_reference Univ.puniverses -> constr
 
 (*
  * Safely instantiate a global reference, updating the evar map
  *)
-val new_global : evar_map -> global_reference -> evar_map * constr
+val new_global : evar_map -> Globnames.global_reference -> evar_map * constr
