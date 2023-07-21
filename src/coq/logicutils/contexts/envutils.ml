@@ -33,8 +33,8 @@ let lookup_all_rels (env : env) : rel_declaration list =
 (* Return a name-type pair from the given rel_declaration. *)
 let rel_name_type rel : Name.t * types =
   match rel with
-  | CRD.LocalAssum (n, t) -> (n, t)
-  | CRD.LocalDef (n, _, t) -> (n, t)
+  | CRD.LocalAssum (n, t) -> (Context.binder_name n, t)
+  | CRD.LocalDef (n, _, t) -> (Context.binder_name n, t)
 
 
 (* Push a local binding to an environment *)
