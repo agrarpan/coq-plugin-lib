@@ -25,7 +25,7 @@ let decompose_module_signature mod_sign =
  * The optional argument specifies functor parameters.
  *)
 let declare_module_structure ?(params=[]) ident declare_elements =
-  let mod_sign = Vernacexpr.Check [] in
+  let mod_sign = Declaremods.Check [] in
   let mod_path =
     Declaremods.start_module Modintern.interp_module_ast None ident params mod_sign
   in

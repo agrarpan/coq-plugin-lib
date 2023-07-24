@@ -36,7 +36,7 @@ let parse_tac_str (s : string) : unit Proofview.tactic =
 (* Run a coq tactic against a given goal, returning generated subgoals *)
 let run_tac env sigma (tac : unit Proofview.tactic) (goal : constr)
     : Goal.goal list * Evd.evar_map =
-  let p = Proof.start sigma [(env, EConstr.of_constr goal)] in
+    let p = Proof.start ~name:(Names.Id.of_string "placeholder") ~poly:true sigma [(env, EConstr.of_constr goal)] in
   let (p', _) = Proof.run_tactic env tac p in
   let (subgoals, _, _, _, sigma) = Proof.proof p' in
   subgoals, sigma
@@ -476,7 +476,7 @@ and apply_in (n, valu, typ, body) (env, sigma, opts) : tactical option =
     
 (* Last resort decompile let-in as a pose.  *)
 and pose (n, valu, t, body) (env, sigma, opts) : tactical option =
-  let n' = fresh_name env n in
+  let n' = fresh_name env (Context.binder_name n) in
   let env' = push_let_in (Name n', valu, t) env in
   let decomp_body = first_pass env' sigma opts body in
   (* If the binding is NEVER used, just skip this. *)
