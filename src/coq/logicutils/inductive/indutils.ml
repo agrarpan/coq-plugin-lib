@@ -156,19 +156,13 @@ let inst_abs_univ_ctx abs_univ_ctx =
 let make_ind_univs_entry = function
   | Entries.Monomorphic_entry univ_ctx_set ->
     let univ_ctx = Univ.UContext.empty in
-    (Entries.Monomorphic_ind_entry univ_ctx_set, univ_ctx)
-  | Entries.Polymorphic_entry abs_univ_ctx ->
+    (Entries.Monomorphic_entry univ_ctx_set, univ_ctx)
+  | Entries.Polymorphic_entry (name_array, abs_univ_ctx) ->
     let univ_ctx = inst_abs_univ_ctx abs_univ_ctx in
-    (Entries.Polymorphic_ind_entry univ_ctx, univ_ctx)
-  | Entries.Cumulative_ind_entry abs_univ_cumul ->
-    let abs_univ_ctx = Univ.ACumulativityInfo.univ_context abs_univ_cumul in
-    let univ_ctx = inst_abs_univ_ctx abs_univ_ctx in
-    let univ_var = Univ.ACumulativityInfo.variance abs_univ_cumul in
-    let univ_cumul = Univ.CumulativityInfo.make (univ_ctx, univ_var) in
-    (Entries.Cumulative_ind_entry univ_cumul, univ_ctx)
+    (Entries.Polymorphic_entry (name_array, univ_ctx), univ_ctx)
 
 let open_inductive ?(global=false) env (mind_body, ind_body) =
-  let univs, univ_ctx = make_ind_univs_entry mind_body.mind_universes in
+  let univs, univ_ctx = make_ind_univs_entry mind_body in
   let subst_univs = Vars.subst_instance_constr (Univ.UContext.instance univ_ctx) in
   let env = Environ.push_context univ_ctx env in
   if global then
