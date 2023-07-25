@@ -51,10 +51,10 @@ let named_type decl = CND.get_type decl
 (* --- Constructing declarations --- *)
 
 (* Make the rel declaration for a local assumption *)
-let rel_assum (name, typ) = CRD.LocalAssum (name, typ)
+let rel_assum (name, typ) = CRD.LocalAssum (Context.annotR name, typ)
 
 (* Make the rel declaration for a local definition *)
-let rel_defin (name, def, typ) = CRD.LocalDef (name, def, typ)
+let rel_defin (name, def, typ) = CRD.LocalDef (Context.annotR name, def, typ)
 
 (* Make the named declaration for a local assumption *)
 let named_assum (id, typ) = CND.LocalAssum (Context.annotR id, typ)
@@ -71,8 +71,7 @@ let named_defin (id, def, typ) = CND.LocalDef (Context.annotR id, def, typ)
  *)
 let define_rel_decl body decl =
   assert (is_rel_assum decl);
-  match decl with
-    | CRD.LocalAssum (a, _) -> rel_defin (a, body, rel_type decl)
+  rel_defin (rel_name decl, body, rel_type decl)
 
 (* --- Mapping over contexts --- *)
 
@@ -136,7 +135,7 @@ let decompose_prod_n_zeta n term =
     if n > 0 then
       match Constr.kind body with
       | Prod (name, param, body) ->
-        aux (n - 1) (Context.Rel.add (rel_assum (name, param)) ctxt) body
+        aux (n - 1) (Context.Rel.add (rel_assum (Context.binder_name name, param)) ctxt) body
       | LetIn (name, def_term, def_type, body) ->
         aux n ctxt (Vars.subst1 def_term body)
       | _ ->
@@ -156,7 +155,7 @@ let decompose_lam_n_zeta n term =
     if n > 0 then
       match Constr.kind body with
       | Lambda (name, param, body) ->
-        aux (n - 1) (Context.Rel.add (rel_assum (name, param)) ctxt) body
+        aux (n - 1) (Context.Rel.add (rel_assum (Context.binder_name name, param)) ctxt) body
       | LetIn (name, def_term, def_type, body) ->
         Vars.subst1 def_term body |> aux n ctxt
       | _ ->
