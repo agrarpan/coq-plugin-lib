@@ -83,20 +83,20 @@ let rec term_as_string (env : env) (trm : types) =
        "(Π (%s : %s) . %s)"
        (name_as_string (Context.binder_name n))
        (term_as_string env t)
-       (term_as_string (push_local (Context.binder_name n, t) env) b)
+       (term_as_string (push_local (n, t) env) b)
   | Lambda (n, t, b) ->
      Printf.sprintf
        "(λ (%s : %s) . %s)"
        (name_as_string (Context.binder_name n))
        (term_as_string env t)
-       (term_as_string (push_local (Context.binder_name n, t) env) b)
+       (term_as_string (push_local (n, t) env) b)
   | LetIn (n, trm, typ, e) ->
      Printf.sprintf
        "(let (%s : %s) := %s in %s)"
        (name_as_string (Context.binder_name n))
        (term_as_string env typ)
        (term_as_string env trm)
-       (term_as_string (push_let_in (Context.binder_name n, trm, typ) env) e)
+       (term_as_string (push_let_in (n, trm, typ) env) e)
   | App (f, xs) ->
      Printf.sprintf
        "(%s %s)"
