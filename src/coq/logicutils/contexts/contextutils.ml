@@ -57,10 +57,10 @@ let rel_assum (name, typ) = CRD.LocalAssum (name, typ)
 let rel_defin (name, def, typ) = CRD.LocalDef (name, def, typ)
 
 (* Make the named declaration for a local assumption *)
-let named_assum (id, typ) = CND.LocalAssum (id, typ)
+let named_assum (id, typ) = CND.LocalAssum (Context.annotR id, typ)
 
 (* Make the named declaration for a local definition *)
-let named_defin (id, def, typ) = CND.LocalDef (id, def, typ)
+let named_defin (id, def, typ) = CND.LocalDef (Context.annotR id, def, typ)
 
 (*
  * Instantiate a local assumption as a local definition, using the provided term
@@ -71,7 +71,8 @@ let named_defin (id, def, typ) = CND.LocalDef (id, def, typ)
  *)
 let define_rel_decl body decl =
   assert (is_rel_assum decl);
-  rel_defin (rel_name decl, body, rel_type decl)
+  match decl with
+    | CRD.LocalAssum (a, _) -> rel_defin (a, body, rel_type decl)
 
 (* --- Mapping over contexts --- *)
 
@@ -104,7 +105,9 @@ let smash_prod_assum ctxt body =
     (fun body decl ->
        match rel_value decl with
        | Some defn -> Vars.subst1 defn body
-       | None -> mkProd (rel_name decl, rel_type decl, body))
+       | None -> match decl with
+       | CRD.LocalAssum (a, _) -> mkProd (a, rel_type decl, body)
+       | CRD.LocalDef (a, _, _) -> mkProd (a, rel_type decl, body))
     ~init:body
     ctxt
 
@@ -117,7 +120,9 @@ let smash_lam_assum ctxt body =
     (fun body decl ->
        match rel_value decl with
        | Some defn -> Vars.subst1 defn body
-       | None -> mkLambda (rel_name decl, rel_type decl, body))
+       | None -> match decl with
+        | CRD.LocalAssum (a, _) -> mkLambda (a, rel_type decl, body)
+        | CRD.LocalDef (a, _, _) -> mkLambda (a, rel_type decl, body))
     ~init:body
     ctxt
 
@@ -200,13 +205,13 @@ let bindings_for_inductive env mutind_body ind_bodies : rel_declaration list =
        (fun i ind_body ->
          let name_id = ind_body.mind_typename in
          let typ = type_of_inductive env i mutind_body in
-         CRD.LocalAssum (Name name_id, typ))
+         CRD.LocalAssum (Context.nameR name_id, typ))
        ind_bodies)
 
 (*
  * Fixpoints
  *)
-let bindings_for_fix (names : name array) (typs : types array) : rel_declaration list =
+let bindings_for_fix (names : name Context.binder_annot array) (typs : types array) : rel_declaration list =
   Array.to_list
     (CArray.map2_i
        (fun i name typ -> CRD.LocalAssum (name, Vars.lift i typ))

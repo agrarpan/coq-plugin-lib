@@ -116,7 +116,7 @@ let rec term_as_string (env : env) (trm : types) =
      let name_id = (ind_bodies.(i_index)).mind_typename in
      Id.to_string name_id
   | Fix ((is, i), (ns, ts, ds)) ->
-     let env_fix = push_rel_context (bindings_for_fix (Array.map Context.binder_name ns) ds) env in
+     let env_fix = push_rel_context (bindings_for_fix ns ds) env in
      String.concat
        " with "
        (map3

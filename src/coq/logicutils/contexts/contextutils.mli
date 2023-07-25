@@ -20,8 +20,8 @@ module CND = Context.Named.Declaration
 (* 
  * Construct a local assumption/definition 
  *)
-val rel_assum : Name.t * 'types -> ('constr, 'types) CRD.pt
-val rel_defin : Name.t * 'constr * 'types -> ('constr, 'types) CRD.pt
+val rel_assum : Name.t Context.binder_annot * 'types -> ('constr, 'types) CRD.pt
+val rel_defin : Name.t Context.binder_annot * 'constr * 'types -> ('constr, 'types) CRD.pt
 
 (*
  * Instantiate a local assumption as a local definition, using the provided term
@@ -133,7 +133,7 @@ val bindings_for_inductive :
   env -> mutual_inductive_body -> one_inductive_body array -> rel_declaration list
 
 val bindings_for_fix :
-  name array -> types array -> rel_declaration list
+  name Context.binder_annot array -> types array -> rel_declaration list
 
 (* --- Combining contexts --- *) 
 
