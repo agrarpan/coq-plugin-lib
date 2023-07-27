@@ -92,7 +92,7 @@ let extern env sigma t : constr_expr =
   Constrextern.extern_constr true env sigma (EConstr.of_constr t)
 
 (* Construct the external expression for a definition *)
-let expr_of_global (g : Globnames.global_reference) : constr_expr =
+let expr_of_global (g : GlobRef.t) : constr_expr =
   let r = extern_reference Id.Set.empty g in
   CAst.make @@ (CAppExpl ((None, r, None), []))
 
