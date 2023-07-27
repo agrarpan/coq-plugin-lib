@@ -132,11 +132,6 @@ let map_rec_env_fix map_rec d env (sigma : evar_map) a ns ts (trm : types) =
   let d_n = List.fold_left (fun a' _ -> d a') a (range 0 n) in
   map_rec env_fix sigma d_n trm
 
-(*
- * Recurse on a mapping function with an environment for a fixpoint
- * TODO do we need both of these, or is type system too weak?
- *)
-
 (* 
  * TODO explain
  *)
