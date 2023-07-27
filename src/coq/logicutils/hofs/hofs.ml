@@ -136,12 +136,6 @@ let map_rec_env_fix map_rec d env (sigma : evar_map) a ns ts (trm : types) =
  * Recurse on a mapping function with an environment for a fixpoint
  * TODO do we need both of these, or is type system too weak?
  *)
-let map_rec_env_fix_cartesian (map_rec : ('a, 'b) list_transformer_with_env) d env sigma a ns ts =
-  let fix_bindings = bindings_for_fix ns ts in
-  let env_fix = push_rel_context fix_bindings env in
-  let n = List.length fix_bindings in
-  let d_n = List.fold_left (fun a' _ -> d a') a (range 0 n) in
-  map_rec env_fix sigma d_n
 
 (* 
  * TODO explain
