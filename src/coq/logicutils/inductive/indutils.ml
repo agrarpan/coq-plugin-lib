@@ -154,10 +154,10 @@ let inst_abs_univ_ctx abs_univ_ctx =
 
 (* Instantiate an abstract_inductive_universes into an Entries.inductive_universes with Univ.UContext.t (TODO do we do something with evar_map here?) *)
 let make_ind_univs_entry = function
-  | Entries.Monomorphic_entry univ_ctx_set ->
+  | Declarations.Monomorphic uctx_set ->
     let univ_ctx = Univ.UContext.empty in
-    (Entries.Monomorphic_entry univ_ctx_set, univ_ctx)
-  | Entries.Polymorphic_entry (name_array, abs_univ_ctx) ->
+    (Entries.Monomorphic_entry uctx_set, univ_ctx)
+  | Declarations.Polymorphic auctx ->
     let univ_ctx = inst_abs_univ_ctx abs_univ_ctx in
     (Entries.Polymorphic_entry (name_array, univ_ctx), univ_ctx)
 
