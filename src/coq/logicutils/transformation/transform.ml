@@ -88,12 +88,14 @@ let transform_inductive ident tr_constr (mind_body, ind_body as ind_specif) =
 let try_register_record mod_path (ind, ind') =
   try
     let r = lookup_structure ind in
+    let r' = lookup_structure ind' in
     Feedback.msg_info (Pp.str "Transformed a record");
-    let con = r.s_CONST in
+    (* let con = r.s_CONST in *)
     let pks = r.s_PROJKIND in
     let ps = r.s_PROJ in
+    let ps' = List.map (Option.map (fun p -> Constant.make2 mod_path (Constant.label p))) ps in
     (try
-       declare_structure (con, pks, ps)
+       declare_structure (r'.s_CONST, pks, ps')
      with _ ->
        Feedback.msg_warning
          (Pp.str "Failed to register projections for transformed record"))
