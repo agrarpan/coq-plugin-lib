@@ -163,7 +163,7 @@ let make_ind_univs_entry = function
     (Entries.Polymorphic_entry (Univ.AUContext.names auctx, univ_ctx), univ_ctx)
 
 let open_inductive ?(global=false) env (mind_body, ind_body) =
-  let univs, univ_ctx = make_ind_univs_entry mind_body in
+  let univs, univ_ctx = make_ind_univs_entry mind_body.mind_universes in
   let subst_univs = Vars.subst_instance_constr (Univ.UContext.instance univ_ctx) in
   let env = Environ.push_context univ_ctx env in
   if global then
