@@ -56,25 +56,26 @@ let edeclare ident (_, poly, _ as k) ~opaque sigma udecl body tyopt imps hook re
   let univs = Evd.check_univ_decl ~poly sigma udecl in
   let ubinders = Evd.universe_binders sigma in
   let ce = Declare.definition_entry ?types:tyopt ~univs body in
-  DeclareDef.declare_definition ident k ce ubinders imps hook
+  let uctx = Evd.evar_universe_context sigma in
+  let hook_data = Option.map (fun hook -> hook, uctx, []) hook in
+  DeclareDef.declare_definition ~ontop:None ?hook_data ident k ce ubinders imps
 
 (* Define a new Coq term *)
 let define_term ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
-  let k = (Global, Flags.is_universe_polymorphism(), Definition) in
+  let k = (Global, Attributes.is_universe_polymorphism(), Definition) in
   let udecl = UState.default_univ_decl in
-  let nohook = Lemmas.mk_hook (fun _ x -> x) in
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
-  edeclare n k ~opaque:false evm udecl etrm etyp [] nohook refresh
+  edeclare n k ~opaque:false evm udecl etrm etyp [] None refresh
 
 (* Define a Canonical Structure *)
 let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
-  let k = (Global, Flags.is_universe_polymorphism (), CanonicalStructure) in
+  let k = (Global, Attributes.is_universe_polymorphism (), CanonicalStructure) in
   let udecl = UState.default_univ_decl in
-  let hook = Lemmas.mk_hook (fun _ x -> declare_canonical_structure x; x) in
+  let hook = Lemmas.mk_hook (fun _ _ _ x -> declare_canonical_structure x; ()) in
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
-  edeclare n k ~opaque:false evm udecl etrm etyp [] hook refresh
+  edeclare n k ~opaque:false evm udecl etrm etyp [] (Some hook) refresh
 
 (* --- Converting between representations --- *)
 
@@ -92,7 +93,7 @@ let extern env sigma t : constr_expr =
   Constrextern.extern_constr true env sigma (EConstr.of_constr t)
 
 (* Construct the external expression for a definition *)
-let expr_of_global (g : global_reference) : constr_expr =
+let expr_of_global (g : GlobRef.t) : constr_expr =
   let r = extern_reference Id.Set.empty g in
   CAst.make @@ (CAppExpl ((None, r, None), []))
 
@@ -115,7 +116,5 @@ let constr_of_pglobal (glob, univs) =
 
 (* Safely instantiate a global reference, with proper universe handling *)
 let new_global sigma gref =
-  let sigma_ref = ref sigma in
-  let glob =  Evarutil.e_new_global sigma_ref gref in
-  let sigma = ! sigma_ref in
-  sigma, EConstr.to_constr sigma glob
+  let sigma, typ = Evarutil.new_global sigma gref in
+  sigma, EConstr.to_constr sigma typ

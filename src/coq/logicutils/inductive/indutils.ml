@@ -31,7 +31,7 @@ let check_inductive_supported mutind_body : unit =
 let inductive_of_elim (env : env) (pc : pconstant) : MutInd.t option =
   let (c, u) = pc in
   let kn = Constant.canonical c in
-  let (modpath, dirpath, label) = KerName.repr kn in
+  let (modpath, label) = KerName.repr kn in
   let rec try_find_ind is_rev =
     try
       let label_string = Label.to_string label in
@@ -42,7 +42,7 @@ let inductive_of_elim (env : env) (pc : pconstant) : MutInd.t option =
       if (suffix = "_ind" || suffix = "_rect" || suffix = "_rec" || suffix = "_ind_r") then
         let ind_label_string = String.sub label_string 0 split_index in
         let ind_label = Label.of_id (Id.of_string_soft ind_label_string) in
-        let ind_name = MutInd.make1 (KerName.make modpath dirpath ind_label) in
+        let ind_name = MutInd.make1 (KerName.make modpath ind_label) in
         let _ = lookup_mind ind_name env in
         Some ind_name
       else
@@ -56,7 +56,7 @@ let inductive_of_elim (env : env) (pc : pconstant) : MutInd.t option =
       else
         None
   in try_find_ind false
-                                 
+
 (*
  * Get the number of constructors for an inductive type
  *
@@ -78,7 +78,7 @@ let is_elim (env : env) (trm : types) =
 
 (* Lookup the eliminator over the type sort *)
 let type_eliminator (env : env) (ind : inductive) =
-  Universes.constr_of_global (Indrec.lookup_eliminator ind InType)
+  UnivGen.constr_of_global (Indrec.lookup_eliminator ind InType)
 
 (* Applications of eliminators *)
 type elim_app =
@@ -146,45 +146,30 @@ let arity_of_ind_body ind_body =
     let sort = Constr.mkType template_level in
     recompose_prod_assum ind_body.mind_arity_ctxt sort
 
-(* Create an Entries.local_entry from a Rel.Declaration.t *)
-let make_ind_local_entry decl =
-  let entry =
-    match decl with
-    | CRD.LocalAssum (_, typ) -> Entries.LocalAssumEntry typ
-    | CRD.LocalDef (_, term, _) -> Entries.LocalDefEntry term
-  in
-  match CRD.get_name decl with
-  | Name.Name id -> (id, entry)
-  | Name.Anonymous -> failwith "Parameters to an inductive type may not be anonymous"
 
 (* Instantiate an abstract universe context *)
 let inst_abs_univ_ctx abs_univ_ctx =
   (* Note that we're creating *globally* fresh universe levels. *)
-  Universes.fresh_instance_from_context abs_univ_ctx |> Univ.UContext.make
+  let instance, (_, constr) = UnivGen.fresh_instance abs_univ_ctx in
+  Univ.UContext.make (instance, constr)
 
 (* Instantiate an abstract_inductive_universes into an Entries.inductive_universes with Univ.UContext.t (TODO do we do something with evar_map here?) *)
 let make_ind_univs_entry = function
-  | Monomorphic_ind univ_ctx_set ->
+  | Declarations.Monomorphic uctx_set ->
     let univ_ctx = Univ.UContext.empty in
-    (Entries.Monomorphic_ind_entry univ_ctx_set, univ_ctx)
-  | Polymorphic_ind abs_univ_ctx ->
-    let univ_ctx = inst_abs_univ_ctx abs_univ_ctx in
-    (Entries.Polymorphic_ind_entry univ_ctx, univ_ctx)
-  | Cumulative_ind abs_univ_cumul ->
-    let abs_univ_ctx = Univ.ACumulativityInfo.univ_context abs_univ_cumul in
-    let univ_ctx = inst_abs_univ_ctx abs_univ_ctx in
-    let univ_var = Univ.ACumulativityInfo.variance abs_univ_cumul in
-    let univ_cumul = Univ.CumulativityInfo.make (univ_ctx, univ_var) in
-    (Entries.Cumulative_ind_entry univ_cumul, univ_ctx)
+    (Entries.Monomorphic_entry uctx_set, univ_ctx)
+  | Declarations.Polymorphic auctx ->
+    let univ_ctx = inst_abs_univ_ctx auctx in
+    (Entries.Polymorphic_entry (Univ.AUContext.names auctx, univ_ctx), univ_ctx)
 
 let open_inductive ?(global=false) env (mind_body, ind_body) =
   let univs, univ_ctx = make_ind_univs_entry mind_body.mind_universes in
   let subst_univs = Vars.subst_instance_constr (Univ.UContext.instance univ_ctx) in
   let env = Environ.push_context univ_ctx env in
   if global then
-    Global.push_context false univ_ctx;
+    Global.push_context_set false (Univ.ContextSet.of_context univ_ctx);
   let arity = arity_of_ind_body ind_body in
-  let arity_ctx = [CRD.LocalAssum (Name.Anonymous, arity)] in
+  let arity_ctx = [CRD.LocalAssum (Context.annotR Name.Anonymous, arity)] in
   let ctors_typ = Array.map (recompose_prod_assum arity_ctx) ind_body.mind_user_lc in
   env, univs, subst_univs arity, Array.map_to_list subst_univs ctors_typ
 
@@ -202,10 +187,11 @@ let declare_inductive typename consnames template univs nparam arity constypes =
   let mind_entry =
     { mind_entry_record = None;
       mind_entry_finite = Declarations.Finite;
-      mind_entry_params = List.map make_ind_local_entry params;
+      mind_entry_params = params;
       mind_entry_inds = [ind_entry];
       mind_entry_universes = univs;
-      mind_entry_private = None }
+      mind_entry_private = None;
+      mind_entry_variance = None }
   in
   let ((_, ker_name), _) = Declare.declare_mind mind_entry in
   let mind = MutInd.make1 ker_name in

@@ -36,7 +36,7 @@ let parse_tac_str (s : string) : unit Proofview.tactic =
 (* Run a coq tactic against a given goal, returning generated subgoals *)
 let run_tac env sigma (tac : unit Proofview.tactic) (goal : constr)
     : Goal.goal list * Evd.evar_map =
-  let p = Proof.start sigma [(env, EConstr.of_constr goal)] in
+    let p = Proof.start ~name:(Names.Id.of_string "placeholder") ~poly:true sigma [(env, EConstr.of_constr goal)] in
   let (p', _) = Proof.run_tactic env tac p in
   let (subgoals, _, _, _, sigma) = Proof.proof p' in
   subgoals, sigma
@@ -437,19 +437,19 @@ and exists (f, args) (env, sigma, opts) : tactical option =
   dot (Exists (env, exT.index)) (first_pass env sigma opts exT.unpacked)
   
 (* Value must be a rewrite on a hypothesis in context. *)
-and rewrite_in (_, valu, _, body) (env, sigma, opts) : tactical option =
+and rewrite_in (name, valu, _, body) (env, sigma, opts) : tactical option =
   let valu = Reduction.whd_betaiota env valu in
   try_app valu                   >>= fun (f, args) ->
   dest_rewrite (mkApp (f, args)) >>= fun rewr -> 
   try_rel rewr.px                >>= fun idx ->
   guard (noccurn (idx + 1) body) >>= fun _ ->
   let n, t = rel_name_type (lookup_rel idx env) in
-  let env' = push_local (n, t) env in
+  let env' = push_local (Context.make_annot n (Context.binder_relevance name), t) env in
   dot (RewriteIn (env, rewr.eq, rewr.px, rewr.left))
     (first_pass env' sigma opts body)
 
 (* Value must be an application with last argument in context. *)
-and apply_in (n, valu, typ, body) (env, sigma, opts) : tactical option =
+and apply_in (name, valu, typ, body) (env, sigma, opts) : tactical option =
   let valu = Reduction.whd_betaiota env valu in
   try_app valu >>= fun (f, args) ->
   let len = Array.length args in
@@ -458,7 +458,7 @@ and apply_in (n, valu, typ, body) (env, sigma, opts) : tactical option =
   guard (noccurn (idx + 1) body) >>= fun _ ->      (* H does not occur in body *)
   guard (not (noccurn 1 body)) >>= fun _ ->        (* new binding DOES occur *)
   let n, t = rel_name_type (lookup_rel idx env) in (* "H" *)
-  let env' = push_local (n, t) env in              (* change type of "H" *)
+  let env' = push_local (Context.make_annot n (Context.binder_relevance name), t) env in              (* change type of "H" *)
   let prf = mkApp (f, Array.sub args 0 (len - 1)) in
   (* let H2 := f H1 := H2 ... *)
   let apply_binding app_in (_, sigma) =
@@ -476,8 +476,8 @@ and apply_in (n, valu, typ, body) (env, sigma, opts) : tactical option =
     
 (* Last resort decompile let-in as a pose.  *)
 and pose (n, valu, t, body) (env, sigma, opts) : tactical option =
-  let n' = fresh_name env n in
-  let env' = push_let_in (Name n', valu, t) env in
+  let n' = fresh_name env (Context.binder_name n) in
+  let env' = push_let_in (Context.make_annot (Name n') (Context.binder_relevance n), valu, t) env in
   let decomp_body = first_pass env' sigma opts body in
   (* If the binding is NEVER used, just skip this. *)
   if noccurn 1 body then Some decomp_body

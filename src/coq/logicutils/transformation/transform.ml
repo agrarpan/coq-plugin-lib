@@ -43,9 +43,9 @@ let force_constant_body const_body =
 let transform_constant ident tr_constr const_body =
   let env =
     match const_body.const_universes with
-    | Monomorphic_const univs ->
+    | Monomorphic univs ->
       Global.env () |> Environ.push_context_set univs
-    | Polymorphic_const univs ->
+    | Polymorphic univs ->
       CErrors.user_err ~hdr:"transform_constant"
         Pp.(str "Universe polymorphism is not supported")
   in
@@ -88,15 +88,14 @@ let transform_inductive ident tr_constr (mind_body, ind_body as ind_specif) =
 let try_register_record mod_path (ind, ind') =
   try
     let r = lookup_structure ind in
+    let r' = lookup_structure ind' in
     Feedback.msg_info (Pp.str "Transformed a record");
+    (* let con = r.s_CONST in *)
     let pks = r.s_PROJKIND in
-    let ps =
-      List.map
-        (Option.map (fun p -> Constant.make2 mod_path (Constant.label p)))
-        r.s_PROJ
-    in
+    let ps = r.s_PROJ in
+    let ps' = List.map (Option.map (fun p -> Constant.make2 mod_path (Constant.label p))) ps in
     (try
-       declare_structure (ind', (ind', 1), pks, ps)
+       declare_structure (r'.s_CONST, pks, ps')
      with _ ->
        Feedback.msg_warning
          (Pp.str "Failed to register projections for transformed record"))

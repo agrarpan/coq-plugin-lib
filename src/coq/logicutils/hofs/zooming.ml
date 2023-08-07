@@ -56,8 +56,8 @@ let zoom_lambda_names env except trm : env * types * Id.t list =
     | limit ->
      match kind trm with
      | Lambda (n, t, b) ->
-        let name = fresh_name env n in
-        let env' = push_local (Name name, t) env in
+        let name = fresh_name env (Context.binder_name n) in
+        let env' = push_local (Context.make_annot (Name name) (Context.binder_relevance n), t) env in
         let env, trm, names =
           aux env' (limit - 1) b in
         (env, trm, name :: names)
