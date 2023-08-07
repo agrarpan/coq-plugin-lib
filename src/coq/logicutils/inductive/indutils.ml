@@ -150,7 +150,8 @@ let arity_of_ind_body ind_body =
 (* Instantiate an abstract universe context *)
 let inst_abs_univ_ctx abs_univ_ctx =
   (* Note that we're creating *globally* fresh universe levels. *)
-  Universes.fresh_instance_from_context abs_univ_ctx |> Univ.UContext.make
+  let instance, (_, constr) = UnivGen.fresh_instance abs_univ_ctx in
+  Univ.UContext.make (instance, constr)
 
 (* Instantiate an abstract_inductive_universes into an Entries.inductive_universes with Univ.UContext.t (TODO do we do something with evar_map here?) *)
 let make_ind_univs_entry = function
@@ -158,17 +159,17 @@ let make_ind_univs_entry = function
     let univ_ctx = Univ.UContext.empty in
     (Entries.Monomorphic_entry uctx_set, univ_ctx)
   | Declarations.Polymorphic auctx ->
-    let univ_ctx = inst_abs_univ_ctx abs_univ_ctx in
-    (Entries.Polymorphic_entry (name_array, univ_ctx), univ_ctx)
+    let univ_ctx = inst_abs_univ_ctx auctx in
+    (Entries.Polymorphic_entry (Univ.AUContext.names auctx, univ_ctx), univ_ctx)
 
 let open_inductive ?(global=false) env (mind_body, ind_body) =
   let univs, univ_ctx = make_ind_univs_entry mind_body in
   let subst_univs = Vars.subst_instance_constr (Univ.UContext.instance univ_ctx) in
   let env = Environ.push_context univ_ctx env in
   if global then
-    Global.push_context_set false univ_ctx;
+    Global.push_context_set false (Univ.ContextSet.of_context univ_ctx);
   let arity = arity_of_ind_body ind_body in
-  let arity_ctx = [CRD.LocalAssum (Name.Anonymous, arity)] in
+  let arity_ctx = [CRD.LocalAssum (Context.annotR Name.Anonymous, arity)] in
   let ctors_typ = Array.map (recompose_prod_assum arity_ctx) ind_body.mind_user_lc in
   env, univs, subst_univs arity, Array.map_to_list subst_univs ctors_typ
 
