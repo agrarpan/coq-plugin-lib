@@ -19,7 +19,8 @@ let make_constant id =
  *)
 let open_constant env const =
   let (Some (term, auctx)) = Global.body_of_constant const in
-  let uctx = Universes.fresh_instance_from_context auctx |> Univ.UContext.make in
+  let instance, (_, constr) = UnivGen.fresh_instance auctx in
+  let uctx = Univ.UContext.make (instance, constr) in
   let term = Vars.subst_instance_constr (Univ.UContext.instance uctx) term in
   let env = Environ.push_context uctx env in
   env, term
