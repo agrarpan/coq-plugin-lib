@@ -38,8 +38,8 @@ let run_tac env sigma (tac : unit Proofview.tactic) (goal : constr)
     : Goal.goal list * Evd.evar_map =
     let p = Proof.start ~name:(Names.Id.of_string "placeholder") ~poly:true sigma [(env, EConstr.of_constr goal)] in
   let (p', _) = Proof.run_tactic env tac p in
-  let (subgoals, _, _, _, sigma) = Proof.proof p' in
-  subgoals, sigma
+  let d = Proof.data p' in
+  d.goals, d.sigma
     
 (* Returns true if the given tactic solves the goal. *)
 let solves env sigma (tac : unit Proofview.tactic) (goal : constr) : bool state =
@@ -217,7 +217,9 @@ let rec intros_revert (t : tactical) : tactical =
 (* Combine common subgoal tactics into semicolons. *)
 let rec semicolons sigma (t : tactical) : tactical =
   let first t = match t with
-    | Compose ( [ tac ], _) -> tac in
+    | Compose ( [ tac ], _) -> tac
+    | Compose _ -> assert false
+  in
   let subgoals t = match t with
     | Compose ( _, goals) -> goals in
   match t with
@@ -502,7 +504,9 @@ let bullet level =
   let blt = match level mod 3 with
     | 0 -> '*'
     | 1 -> '-'
-    | 2 -> '+' in
+    | 2 -> '+'
+    | _ -> assert false
+  in
   str (String.make num blt) ++ str " "
   
 (* Concatenate list of pp.t with separator *)

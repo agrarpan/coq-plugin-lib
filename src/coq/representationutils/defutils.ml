@@ -2,6 +2,8 @@
  * Utilities for defining terms
  *)
 
+module CVars = Vars
+
 open Constr
 open Names
 open Evd
@@ -49,7 +51,7 @@ let edeclare ident (_, poly, _ as k) ~opaque sigma udecl body tyopt imps hook re
   let body = to_constr sigma body in
   let tyopt = Option.map (to_constr sigma) tyopt in
   let uvars_fold uvars c =
-    Univ.LSet.union uvars (Univops.universes_of_constr c) in
+    Univ.LSet.union uvars (CVars.universes_of_constr c) in
   let uvars = List.fold_left uvars_fold Univ.LSet.empty
     (Option.List.cons tyopt [body]) in
   let sigma = Evd.restrict_universe_context sigma uvars in
@@ -99,8 +101,9 @@ let expr_of_global (g : GlobRef.t) : constr_expr =
 
 (* Convert a term into a global reference with universes (or raise Not_found) *)
 let pglobal_of_constr term =
+  let open GlobRef in
   match Constr.kind term with
-  | Const (const, univs) -> Globnames.ConstRef const, univs
+  | Const (const, univs) -> ConstRef const, univs
   | Ind (ind, univs) -> IndRef ind, univs
   | Construct (cons, univs) -> ConstructRef cons, univs
   | Var id -> VarRef id, Univ.Instance.empty
@@ -108,8 +111,9 @@ let pglobal_of_constr term =
 
 (* Convert a global reference with universes into a term *)
 let constr_of_pglobal (glob, univs) =
+  let open GlobRef in
   match glob with
-  | Globnames.ConstRef const -> mkConstU (const, univs)
+  | ConstRef const -> mkConstU (const, univs)
   | IndRef ind -> mkIndU (ind, univs)
   | ConstructRef cons -> mkConstructU (cons, univs)
   | VarRef id -> mkVar id

@@ -210,7 +210,7 @@ let bindings_for_inductive env mutind_body ind_bodies : rel_declaration list =
 (*
  * Fixpoints
  *)
-let bindings_for_fix (names : name Context.binder_annot array) (typs : types array) : rel_declaration list =
+let bindings_for_fix (names : Name.t Context.binder_annot array) (typs : types array) : rel_declaration list =
   Array.to_list
     (CArray.map2_i
        (fun i name typ -> CRD.LocalAssum (name, Vars.lift i typ))

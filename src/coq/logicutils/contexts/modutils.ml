@@ -55,7 +55,7 @@ let fold_module_structure_by_decl init fold_const fold_ind mod_body =
     match mod_elem with
     | SFBconst const_body ->
       let const = Constant.make2 mod_path label in
-      if Refset.mem (ConstRef const) globset then
+      if GlobRef.Set.mem (ConstRef const) globset then
         (globset, acc)
       else
         (globset, fold_const acc const const_body)
@@ -65,7 +65,7 @@ let fold_module_structure_by_decl init fold_const fold_ind mod_body =
       let ind = (MutInd.make2 mod_path label, 0) in
       let globset' =
         List.map (Indrec.lookup_eliminator ind) ind_body.mind_kelim |>
-        List.fold_left (fun gset gref -> Refset.add gref gset) globset
+        List.fold_left (fun gset gref -> GlobRef.Set.add gref gset) globset
       in
       (globset', fold_ind acc ind (mind_body, ind_body))
     | SFBmodule mod_body ->
@@ -77,7 +77,7 @@ let fold_module_structure_by_decl init fold_const fold_ind mod_body =
         Pp.(str "Skipping nested module signature " ++ Label.print label);
       (globset, acc)
   in
-  fold_module_structure_by_elem (Refset.empty, init) fold_mod_elem mod_body |> snd
+  fold_module_structure_by_elem (GlobRef.Set.empty, init) fold_mod_elem mod_body |> snd
 
 (*
  * Same as `fold_module_structure_by_decl` except a single step function

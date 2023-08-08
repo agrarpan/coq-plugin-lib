@@ -6,8 +6,6 @@ open Utilities
 open Environ
 open Constr
 open Declarations
-open Decl_kinds
-open Constrextern
 open Contextutils
 open Evd
 open Names

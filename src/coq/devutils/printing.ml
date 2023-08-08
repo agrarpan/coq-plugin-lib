@@ -58,8 +58,10 @@ let universe_as_string u =
 (* Gets a sort as a string *)
 let sort_as_string s =
   match s with
-  | Term.Prop _ -> if s = Sorts.prop then "Prop" else "Set"
-  | Term.Type u -> Printf.sprintf "Type %s" (universe_as_string u)
+  | Sorts.Prop -> "Prop"
+  | Sorts.Set -> "Set"
+  | Sorts.SProp -> "SProp"
+  | Sorts.Type u -> Printf.sprintf "Type %s" (universe_as_string u)
 
 (* Prints a term *)
 let rec term_as_string (env : env) (trm : types) =
@@ -153,6 +155,7 @@ let rec term_as_string (env : env) (trm : types) =
      Printf.sprintf "(%s)" (print_to_string print_constr trm)
   | Proj (p, c) -> (* TODO *)
      Printf.sprintf "(%s)" (print_to_string print_constr trm)
+  | Int i -> Uint63.to_string i
 
 (* Debug a term *)
 let debug_term (env : env) (trm : types) (descriptor : string) : unit =

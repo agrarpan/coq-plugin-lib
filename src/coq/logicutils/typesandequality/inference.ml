@@ -2,8 +2,6 @@
  * Type inference
  *)
 
-open Environ
-open Evd
 open Constr
 open Declarations
              

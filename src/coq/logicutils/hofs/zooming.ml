@@ -10,7 +10,6 @@ open Envutils
 open Contextutils
 open Debruijn
 open Sigmautils
-open Evd
 open Names
 
 (* --- Zooming --- *)

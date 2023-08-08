@@ -5,7 +5,6 @@ open Constr
 open Contextutils
 open Envutils
 open Utilities
-open Names
 open Evd
 open Stateutils
 

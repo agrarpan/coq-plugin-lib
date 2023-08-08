@@ -78,7 +78,8 @@ let is_elim (env : env) (trm : types) =
 
 (* Lookup the eliminator over the type sort *)
 let type_eliminator (env : env) (ind : inductive) =
-  UnivGen.constr_of_global (Indrec.lookup_eliminator ind InType)
+  UnivGen.constr_of_global (Indrec.lookup_eliminator ind Sorts.InType)
+[@@ocaml.warning "-3"] (* TODO handle univ poly eliminator *)
 
 (* Applications of eliminators *)
 type elim_app =
