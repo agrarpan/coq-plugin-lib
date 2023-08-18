@@ -27,8 +27,8 @@ val rel_name_type : rel_declaration -> Name.t * types
 (*
  * Push to an environment
  *)
-val push_local : (name Context.binder_annot * types) -> env -> env
-val push_let_in : (name Context.binder_annot * types * types) -> env -> env
+val push_local : (Name.t Context.binder_annot * types) -> env -> env
+val push_let_in : (Name.t Context.binder_annot * types * types) -> env -> env
 
 (*
  * Lookup from an environment

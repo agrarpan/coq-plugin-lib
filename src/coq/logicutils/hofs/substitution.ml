@@ -117,7 +117,7 @@ let all_typ_substs_combs : (types * types) comb_substitution =
 
  (* --- Substituting global references --- *)
 
-type global_substitution = GlobRef.t Globnames.Refmap.t
+type global_substitution = GlobRef.t Names.GlobRef.Map.t
 
 (* Substitute global references throughout a term *)
 let rec subst_globals subst (term : constr) =
@@ -126,7 +126,7 @@ let rec subst_globals subst (term : constr) =
     (fun _ t ->
       try
         pglobal_of_constr t |>
-        map_puniverses (flip Globnames.Refmap.find subst) |>
+        map_puniverses (flip Names.GlobRef.Map.find subst) |>
         constr_of_pglobal
       with _ ->
         match kind t with
