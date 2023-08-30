@@ -102,6 +102,18 @@ let try_register_record mod_path (ind, ind') =
   with Not_found ->
     ()
 
+let lookup_eliminator_error_handling ind sorts = 
+  (* Feedback.msg_warning (Pp.(str "start ")); *)
+  List.filter_map (fun x -> x)
+  (List.map 
+    (fun x -> 
+      (* try Some (x, Indrec.lookup_eliminator env ind x) *)
+      try Some (x, Indrec.lookup_eliminator ind x)
+      with
+      | _ -> None
+    )
+    sorts)
+
 (*
  * Declare a new module structure under the given name with the compositionally
  * transformed (i.e., forward-substituted) components from the given module
@@ -154,10 +166,17 @@ let transform_module_structure ?(init=const GlobRef.Map.empty) ?(opaques=GlobRef
       let ncons = Array.length ind_body.mind_consnames in
       let list_cons ind = List.init ncons (fun i -> ConstructRef (ind, i + 1)) in
       let sorts = ind_body.mind_kelim in
-      let list_elim ind = List.map (Indrec.lookup_eliminator ind) sorts in
+      let list_elim ind = lookup_eliminator_error_handling ind sorts in
+      let list_elim_ind = list_elim ind in
+      let list_elim_ind' = list_elim ind' in
+      let list_elim_ind_sorts = List.map fst list_elim_ind in
+      let list_elim_ind'_sorts = List.map fst list_elim_ind' in
+      let common_sorts = List.filter (fun x -> List.exists (fun y -> Sorts.family_equal x y) list_elim_ind_sorts) list_elim_ind'_sorts in 
+      let list_elim_ind_winnowed = List.map snd (List.filter (fun (x, y) -> List.exists (fun z -> Sorts.family_equal x z) common_sorts) list_elim_ind) in
+      let list_elim_ind'_winnowed = List.map snd (List.filter (fun (x, y) -> List.exists (fun z -> Sorts.family_equal x z) common_sorts) list_elim_ind') in
       GlobRef.Map.add (IndRef ind) (IndRef ind') subst |>
       List.fold_right2 GlobRef.Map.add (list_cons ind) (list_cons ind') |>
-      List.fold_right2 GlobRef.Map.add (list_elim ind) (list_elim ind')
+      List.fold_right2 GlobRef.Map.add (list_elim_ind_winnowed) (list_elim_ind'_winnowed)
     | SFBmodule mod_body ->
       Feedback.msg_warning (Pp.str "Skipping nested module structure");
       subst
