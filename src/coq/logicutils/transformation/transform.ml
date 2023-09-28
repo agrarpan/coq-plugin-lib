@@ -163,9 +163,10 @@ let transform_module_structure ?(init=const GlobRef.Map.empty) ?(opaques=GlobRef
       let ind_body = mind_body.mind_packets.(0) in
       let sigma, ind' = transform_inductive ident tr_constr (mind_body, ind_body) in
       try_register_record mod_path' (ind, ind');
+      let subst = GlobRef.Map.add (IndRef ind) (IndRef ind') subst in
       let ncons = Array.length ind_body.mind_consnames in
       let list_cons ind = List.init ncons (fun i -> ConstructRef (ind, i + 1)) in
-      let sorts = ind_body.mind_kelim in
+      let sorts = List.map Sorts.family [Sorts.sprop; Sorts.prop; Sorts.set; Sorts.type1] in
       let list_elim ind = lookup_eliminator_error_handling ind sorts in
       let list_elim_ind = list_elim ind in
       let list_elim_ind' = list_elim ind' in

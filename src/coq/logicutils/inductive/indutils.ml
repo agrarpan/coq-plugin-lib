@@ -170,7 +170,7 @@ let open_inductive ?(global=false) env (mind_body, ind_body) =
   if global then
     Global.push_context_set false (Univ.ContextSet.of_context univ_ctx);
   let arity = arity_of_ind_body ind_body in
-  let arity_ctx = [CRD.LocalAssum (Context.annotR Name.Anonymous, arity)] in
+  let arity_ctx = [CRD.LocalAssum (get_rel_ctx_name Name.Anonymous, arity)] in
   let ctors_typ = Array.map (recompose_prod_assum arity_ctx) ind_body.mind_user_lc in
   env, univs, subst_univs arity, Array.map_to_list subst_univs ctors_typ
 
