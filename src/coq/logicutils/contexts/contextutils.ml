@@ -50,17 +50,25 @@ let named_type decl = CND.get_type decl
     
 (* --- Constructing declarations --- *)
 
+(* Get relative context for a name *)
+let get_rel_ctx_name name = 
+  match name with (* handle if anon or not *)
+  | Anonymous -> Context.anonR
+  | Name idt -> Context.nameR idt
+
+let get_rel_ctx decl = get_rel_ctx_name (rel_name decl)
+
 (* Make the rel declaration for a local assumption *)
-let rel_assum (name, typ) = CRD.LocalAssum (Context.annotR name, typ)
+let rel_assum (name, typ) = CRD.LocalAssum (get_rel_ctx_name name, typ)
 
 (* Make the rel declaration for a local definition *)
-let rel_defin (name, def, typ) = CRD.LocalDef (Context.annotR name, def, typ)
+let rel_defin (name, def, typ) = CRD.LocalDef (get_rel_ctx_name name, def, typ)
 
 (* Make the named declaration for a local assumption *)
-let named_assum (id, typ) = CND.LocalAssum (Context.annotR id, typ)
+let named_assum (id, typ) = CND.LocalAssum (id, typ)
 
 (* Make the named declaration for a local definition *)
-let named_defin (id, def, typ) = CND.LocalDef (Context.annotR id, def, typ)
+let named_defin (id, def, typ) = CND.LocalDef (id, def, typ)
 
 (*
  * Instantiate a local assumption as a local definition, using the provided term

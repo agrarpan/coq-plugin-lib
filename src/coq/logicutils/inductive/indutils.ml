@@ -126,9 +126,9 @@ let rec num_ihs env sigma rec_typ typ =
      let t_red = reduce_stateless reduce_term env sigma t in
      if is_or_applies rec_typ t_red then
        let (n_b_t, b_t, b_b) = destProd b in
-       1 + num_ihs (push_local (n, t) (push_local (n_b_t, b_t) env)) sigma rec_typ b_b
+       1 + num_ihs (push_local (Context.binder_name n, t) (push_local (Context.binder_name n_b_t, b_t) env)) sigma rec_typ b_b
      else
-       num_ihs (push_local (n, t) env) sigma rec_typ b
+       num_ihs (push_local (Context.binder_name n, t) env) sigma rec_typ b
   | _ ->
      0
 

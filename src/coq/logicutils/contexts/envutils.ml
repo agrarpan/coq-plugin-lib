@@ -36,10 +36,10 @@ let rel_name_type rel : Name.t * types =
 
 
 (* Push a local binding to an environment *)
-let push_local (n, t) = push_rel CRD.(LocalAssum (n, t))
+let push_local (n, t) = push_rel CRD.(LocalAssum (get_rel_ctx_name n, t))
 
 (* Push a let-in definition to an environment *)
-let push_let_in (n, e, t) = push_rel CRD.(LocalDef(n, e, t))
+let push_let_in (n, e, t) = push_rel CRD.(LocalDef(get_rel_ctx_name n, e, t))
 
 (* Lookup n rels and remove then *)
 let lookup_pop (n : int) (env : env) =

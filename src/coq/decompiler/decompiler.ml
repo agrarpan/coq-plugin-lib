@@ -446,7 +446,7 @@ and rewrite_in (name, valu, _, body) (env, sigma, opts) : tactical option =
   try_rel rewr.px                >>= fun idx ->
   guard (noccurn (idx + 1) body) >>= fun _ ->
   let n, t = rel_name_type (lookup_rel idx env) in
-  let env' = push_local (Context.make_annot n (Context.binder_relevance name), t) env in
+  let env' = push_local (n, t) env in
   dot (RewriteIn (env, rewr.eq, rewr.px, rewr.left))
     (first_pass env' sigma opts body)
 
@@ -460,7 +460,7 @@ and apply_in (name, valu, typ, body) (env, sigma, opts) : tactical option =
   guard (noccurn (idx + 1) body) >>= fun _ ->      (* H does not occur in body *)
   guard (not (noccurn 1 body)) >>= fun _ ->        (* new binding DOES occur *)
   let n, t = rel_name_type (lookup_rel idx env) in (* "H" *)
-  let env' = push_local (Context.make_annot n (Context.binder_relevance name), t) env in              (* change type of "H" *)
+  let env' = push_local (n, t) env in              (* change type of "H" *)
   let prf = mkApp (f, Array.sub args 0 (len - 1)) in
   (* let H2 := f H1 := H2 ... *)
   let apply_binding app_in (_, sigma) =
@@ -479,12 +479,12 @@ and apply_in (name, valu, typ, body) (env, sigma, opts) : tactical option =
 (* Last resort decompile let-in as a pose.  *)
 and pose (n, valu, t, body) (env, sigma, opts) : tactical option =
   let n' = fresh_name env (Context.binder_name n) in
-  let env' = push_let_in (Context.make_annot (Name n') (Context.binder_relevance n), valu, t) env in
+  let env' = push_let_in (Name n', valu, t) env in
   let decomp_body = first_pass env' sigma opts body in
   (* If the binding is NEVER used, just skip this. *)
   if noccurn 1 body then Some decomp_body
   else dot (Pose (env, valu, n')) (decomp_body)
-       
+   
 (* Decompile a term into its equivalent tactic list. *)
 let tac_from_term env sigma get_hints trm : tactical =
   (* Perform second pass to revise greedy tactic list. *)
