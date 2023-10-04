@@ -114,6 +114,13 @@ let lookup_eliminator_error_handling ind sorts =
     )
     sorts)
 
+let contains s1 s2 =
+  let re = Str.regexp_string s2 in
+    try
+      ignore (Str.search_forward re s1 0);
+      true
+    with Not_found -> false
+
 (*
  * Declare a new module structure under the given name with the compositionally
  * transformed (i.e., forward-substituted) components from the given module
@@ -138,7 +145,7 @@ let transform_module_structure ?(init=const GlobRef.Map.empty) ?(opaques=GlobRef
         match b with
         | SFBconst const_body ->
            let const = Constant.make2 mod_path l in
-           not (GlobRef.Set.mem (GlobRef.ConstRef const) opaques)
+           not (GlobRef.Set.mem (GlobRef.ConstRef const) opaques) && not (contains (Label.to_string l) ("sind"))
         | _ ->
            true)
       mod_elems
