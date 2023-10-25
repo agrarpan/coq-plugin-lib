@@ -64,7 +64,7 @@ let fold_module_structure_by_decl init fold_const fold_ind mod_body =
       let ind_body = mind_body.mind_packets.(0) in
       let ind = (MutInd.make2 mod_path label, 0) in
       let globset' =
-        List.map (Indrec.lookup_eliminator ind) ind_body.mind_kelim |>
+        List.map (Indrec.lookup_eliminator ind) (List.filter (fun (x) -> not (Sorts.family_equal x InSProp)) ind_body.mind_kelim) |>
         List.fold_left (fun gset gref -> GlobRef.Set.add gref gset) globset
       in
       (globset', fold_ind acc ind (mind_body, ind_body))
