@@ -78,7 +78,7 @@ let is_elim (env : env) (trm : types) =
 
 (* Lookup the eliminator over the type sort *)
 let type_eliminator (env : env) (ind : inductive) =
-  UnivGen.constr_of_global (Indrec.lookup_eliminator ind Sorts.InType)
+  UnivGen.constr_of_monomorphic_global (Indrec.lookup_eliminator env ind Sorts.InType)
 [@@ocaml.warning "-3"] (* TODO handle univ poly eliminator *)
 
 (* Applications of eliminators *)
@@ -194,8 +194,5 @@ let declare_inductive typename consnames template univs nparam arity constypes =
       mind_entry_private = None;
       mind_entry_variance = None }
   in
-  let ((_, ker_name), _) = Declare.declare_mind mind_entry in
-  let mind = MutInd.make1 ker_name in
-  let ind = (mind, 0) in
-  Indschemes.declare_default_schemes mind;
-  ind
+  let mind = DeclareInd.declare_mutual_inductive_with_eliminations mind_entry UnivNames.empty_binders [] in
+  (mind, 0)

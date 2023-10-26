@@ -27,7 +27,7 @@ let decompose_module_signature mod_sign =
 let declare_module_structure ?(params=[]) ident declare_elements =
   let mod_sign = Declaremods.Check [] in
   let mod_path =
-    Declaremods.start_module Modintern.interp_module_ast None ident params mod_sign
+    Declaremods.start_module None ident params mod_sign
   in
   Dumpglob.dump_moddef mod_path "mod";
   declare_elements mod_path;
@@ -63,8 +63,9 @@ let fold_module_structure_by_decl init fold_const fold_ind mod_body =
       check_inductive_supported mind_body;
       let ind_body = mind_body.mind_packets.(0) in
       let ind = (MutInd.make2 mod_path label, 0) in
+      let env = Global.env () in
       let globset' =
-        List.map (Indrec.lookup_eliminator ind) (List.filter (fun (x) -> not (Sorts.family_equal x InSProp)) ind_body.mind_kelim) |>
+        List.map (Indrec.lookup_eliminator env ind) [ind_body.mind_kelim] |>
         List.fold_left (fun gset gref -> GlobRef.Set.add gref gset) globset
       in
       (globset', fold_ind acc ind (mind_body, ind_body))
