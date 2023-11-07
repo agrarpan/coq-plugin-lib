@@ -15,6 +15,7 @@ open Indutils
 open Substitution
 open Stateutils
 open Recordops
+open Record
 
 (* Type-sensitive transformation of terms *)
 type constr_transformer = env -> evar_map -> constr -> evar_map * constr
@@ -28,7 +29,7 @@ let force_constant_body const_body =
   | Def const_def ->
     Mod_subst.force_constr const_def
   | OpaqueDef opaq ->
-    Opaqueproof.force_proof (Global.opaque_tables ()) opaq
+    fst (Opaqueproof.force_proof Library.indirect_accessor (Global.opaque_tables ()) opaq)
   | _ ->
     CErrors.user_err ~hdr:"force_constant_body"
       (Pp.str "An axiom has no defining term")
@@ -96,7 +97,7 @@ let try_register_record mod_path (ind, ind') =
         r.s_PROJ
     in
     (try
-       declare_structure ((ind', 1), pks, ps)
+       declare_structure_entry ((ind', 1), pks, ps)
      with _ ->
        Feedback.msg_warning
          (Pp.str "Failed to register projections for transformed record"))
@@ -105,11 +106,11 @@ let try_register_record mod_path (ind, ind') =
 
 let lookup_eliminator_error_handling ind sorts = 
   (* Feedback.msg_warning (Pp.(str "start ")); *)
+  let env = Global.env () in
   List.filter_map (fun x -> x)
   (List.map 
     (fun x -> 
-      (* try Some (x, Indrec.lookup_eliminator env ind x) *)
-      try Some (x, Indrec.lookup_eliminator ind x)
+      try Some (x, Indrec.lookup_eliminator env ind x)
       with
       | _ -> None
     )

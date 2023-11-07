@@ -17,9 +17,10 @@ let make_constant id =
  * Safely extract the body of a constant, instantiating any universe variables 
  *)
 let open_constant env const =
-  let (term, auctx) = Option.get @@ Global.body_of_constant const in
-  let instance, (_, constr) = UnivGen.fresh_instance auctx in
-  let uctx = Univ.UContext.make (instance, constr) in
-  let term = Vars.subst_instance_constr (Univ.UContext.instance uctx) term in
-  let env = Environ.push_context uctx env in
-  env, term
+  match Global.body_of_constant Library.indirect_accessor const with 
+  | (Some (term, _, auctx)) -> 
+    let (uinst, uctxset) = UnivGen.fresh_instance auctx in 
+    let uctx = Univ.UContext.make (uinst, (Univ.ContextSet.constraints uctxset)) in
+    let term = Vars.subst_instance_constr (Univ.UContext.instance uctx) term in
+    let env = Environ.push_context uctx env in env, term
+  | None -> failwith "Constant extraction failed"

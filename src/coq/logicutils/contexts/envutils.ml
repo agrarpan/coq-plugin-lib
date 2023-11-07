@@ -51,7 +51,7 @@ let force_constant_body const_body =
   | Def const_def ->
     Mod_subst.force_constr const_def
   | OpaqueDef opaq ->
-    Opaqueproof.force_proof (Global.opaque_tables ()) opaq
+    fst (Opaqueproof.force_proof Library.indirect_accessor (Global.opaque_tables ()) opaq)
   | _ ->
     CErrors.user_err ~hdr:"force_constant_body"
       (Pp.str "An axiom has no defining term")

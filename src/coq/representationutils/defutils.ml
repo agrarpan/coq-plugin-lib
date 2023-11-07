@@ -7,7 +7,6 @@ module CVars = Vars
 open Constr
 open Names
 open Evd
-open Decl_kinds
 open Recordops
 open Constrexpr
 open Constrextern
@@ -17,7 +16,7 @@ open Constrextern
 (* https://github.com/ybertot/plugin_tutorials/blob/master/tuto1/src/simple_declare.ml 
 
 TODO do we need to return the updated evar_map? *)
-let edeclare ident (_, poly, _ as k) ~opaque sigma udecl body tyopt imps hook refresh =
+let edeclare ident poly ~opaque sigma udecl body tyopt imps hook refresh =
   let open EConstr in
   (* XXX: "Standard" term construction combinators such as `mkApp`
      don't add any universe constraints that may be needed later for
@@ -47,37 +46,30 @@ let edeclare ident (_, poly, _ as k) ~opaque sigma udecl body tyopt imps hook re
     else
       sigma
   in
-  let sigma = Evd.minimize_universes sigma in
-  let body = to_constr sigma body in
-  let tyopt = Option.map (to_constr sigma) tyopt in
-  let uvars_fold uvars c =
-    Univ.LSet.union uvars (CVars.universes_of_constr c) in
-  let uvars = List.fold_left uvars_fold Univ.LSet.empty
-    (Option.List.cons tyopt [body]) in
-  let sigma = Evd.restrict_universe_context sigma uvars in
-  let univs = Evd.check_univ_decl ~poly sigma udecl in
+  let sigma = Evd.minimize_universes sigma in (* todo: is this necessary/bad? *)
+  let sigma, ce = DeclareDef.prepare_definition ~allow_evars:true ~opaque ~poly sigma udecl ~types:tyopt ~body in
   let ubinders = Evd.universe_binders sigma in
-  let ce = Declare.definition_entry ?types:tyopt ~univs body in
-  let uctx = Evd.evar_universe_context sigma in
-  let hook_data = Option.map (fun hook -> hook, uctx, []) hook in
-  DeclareDef.declare_definition ~ontop:None ?hook_data ident k ce ubinders imps
+  let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
+  let kind = Decls.(IsDefinition Definition) in
+  DeclareDef.declare_definition ~name:ident ~scope ~kind ?hook_data:hook ubinders ce imps
+
 
 (* Define a new Coq term *)
 let define_term ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
-  let k = (Global, Attributes.is_universe_polymorphism(), Definition) in
+  let poly = Attributes.is_universe_polymorphism() in
   let udecl = UState.default_univ_decl in
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
-  edeclare n k ~opaque:false evm udecl etrm etyp [] None refresh
+  edeclare n poly ~opaque:false evm udecl etrm etyp [] None refresh
 
 (* Define a Canonical Structure *)
 let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
-  let k = (Global, Attributes.is_universe_polymorphism (), CanonicalStructure) in
+  let poly = Attributes.is_universe_polymorphism() in
   let udecl = UState.default_univ_decl in
-  let hook = Lemmas.mk_hook (fun _ _ _ x -> declare_canonical_structure x; ()) in
+  let hook = DeclareDef.Hook.make (fun x -> let open DeclareDef.Hook.S in Canonical.declare_canonical_structure x.dref) in
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
-  edeclare n k ~opaque:false evm udecl etrm etyp [] (Some hook) refresh
+  edeclare n poly ~opaque:false evm udecl etrm etyp [] (Some (hook, Evd.evar_universe_context evm, [])) refresh (* todo: check if last empty list is correct to pass *)
 
 (* --- Converting between representations --- *)
 
