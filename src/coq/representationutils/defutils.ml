@@ -2,8 +2,6 @@
  * Utilities for defining terms
  *)
 
-module CVars = Vars
-
 open Constr
 open Names
 open Evd
@@ -47,12 +45,10 @@ let edeclare ident poly ~opaque sigma udecl body tyopt imps hook refresh =
       sigma
   in
   let sigma = Evd.minimize_universes sigma in (* todo: is this necessary/bad? *)
-  let sigma, ce = DeclareDef.prepare_definition ~allow_evars:true ~opaque ~poly sigma udecl ~types:tyopt ~body in
-  let ubinders = Evd.universe_binders sigma in
   let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
   let kind = Decls.(IsDefinition Definition) in
-  DeclareDef.declare_definition ~name:ident ~scope ~kind ?hook_data:hook ubinders ce imps
-
+  DeclareDef.declare_definition ~name:ident ~scope ~kind ~opaque ~impargs:imps ~udecl:udecl ?hook:hook ~poly:poly ~types:tyopt ~body:body sigma
+  (* Check this change if something breaks later *)
 
 (* Define a new Coq term *)
 let define_term ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
@@ -69,7 +65,7 @@ let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : b
   let hook = DeclareDef.Hook.make (fun x -> let open DeclareDef.Hook.S in Canonical.declare_canonical_structure x.dref) in
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
-  edeclare n poly ~opaque:false evm udecl etrm etyp [] (Some (hook, Evd.evar_universe_context evm, [])) refresh (* todo: check if last empty list is correct to pass *)
+  edeclare n poly ~opaque:false evm udecl etrm etyp [] (Some hook) refresh (* todo: check if last empty list is correct to pass *)
 
 (* --- Converting between representations --- *)
 
@@ -84,7 +80,7 @@ let intern env sigma t : evar_map * types =
 
 (* Extern a term *)
 let extern env sigma t : constr_expr =
-  Constrextern.extern_constr true env sigma (EConstr.of_constr t)
+  Constrextern.extern_constr ~lax:true env sigma (EConstr.of_constr t)
 
 (* Construct the external expression for a definition *)
 let expr_of_global (g : GlobRef.t) : constr_expr =

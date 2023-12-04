@@ -143,7 +143,7 @@ let arity_of_ind_body ind_body =
   match ind_body.mind_arity with
   | RegularArity { mind_user_arity; mind_sort } ->
     mind_user_arity
-  | TemplateArity { template_param_levels; template_level } ->
+  | TemplateArity { template_level } ->
     let sort = Constr.mkType template_level in
     recompose_prod_assum ind_body.mind_arity_ctxt sort
 
@@ -168,7 +168,7 @@ let open_inductive ?(global=false) env (mind_body, ind_body) =
   let subst_univs = Vars.subst_instance_constr (Univ.UContext.instance univ_ctx) in
   let env = Environ.push_context univ_ctx env in
   if global then
-    Global.push_context_set false (Univ.ContextSet.of_context univ_ctx);
+    Global.push_context_set ~strict:false (Univ.ContextSet.of_context univ_ctx);
   let arity = arity_of_ind_body ind_body in
   let arity_ctx = [CRD.LocalAssum (get_rel_ctx_name Name.Anonymous, arity)] in
   let ctors_typ = Array.map (recompose_prod_assum arity_ctx) ind_body.mind_user_lc in
@@ -181,7 +181,6 @@ let declare_inductive typename consnames template univs nparam arity constypes =
   let ind_entry =
     { mind_entry_typename = typename;
       mind_entry_arity = arity;
-      mind_entry_template = template;
       mind_entry_consnames = consnames;
       mind_entry_lc = List.map snd constypes }
   in
@@ -192,7 +191,9 @@ let declare_inductive typename consnames template univs nparam arity constypes =
       mind_entry_inds = [ind_entry];
       mind_entry_universes = univs;
       mind_entry_private = None;
-      mind_entry_variance = None }
+      mind_entry_template = template;
+      mind_entry_cumulative = true (* is this correct? *)
+      }
   in
   let mind = DeclareInd.declare_mutual_inductive_with_eliminations mind_entry UnivNames.empty_binders [] in
   (mind, 0)

@@ -24,4 +24,4 @@ let type_of_inductive env index mutind_body : types =
   let univs = Declareops.inductive_polymorphic_context mutind_body in
   let univ_instance = Univ.make_abstract_instance univs in
   let mutind_spec = (mutind_body, ind_body) in
-  Inductive.type_of_inductive env (mutind_spec, univ_instance)
+  Inductive.type_of_inductive (mutind_spec, univ_instance)

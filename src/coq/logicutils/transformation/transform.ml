@@ -97,7 +97,7 @@ let try_register_record mod_path (ind, ind') =
         r.s_PROJ
     in
     (try
-       declare_structure_entry ((ind', 1), pks, ps)
+       declare_structure_entry {s_CONST = (ind',1); s_EXPECTEDPARAM = r.s_EXPECTEDPARAM; s_PROJKIND = pks; s_PROJ = ps}
      with _ ->
        Feedback.msg_warning
          (Pp.str "Failed to register projections for transformed record"))

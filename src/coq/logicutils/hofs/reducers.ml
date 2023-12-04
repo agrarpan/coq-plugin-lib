@@ -120,7 +120,7 @@ let reduce_whd_if_let_in (env : env) sigma (trm : types) =
   if isLetIn trm then
     sigma, EConstr.to_constr
       sigma
-      (Reductionops.whd_betaiotazeta sigma (EConstr.of_constr trm))
+      (Reductionops.whd_betaiotazeta env sigma (EConstr.of_constr trm))
   else
     sigma, trm
 
