@@ -332,7 +332,7 @@ and try_custom_tacs env sigma get_hints all_opts trm =
   try
     let goal = (Typeops.infer env trm).uj_type  in
     let goal_env env sigma g =
-      let typ = EConstr.to_constr sigma (Goal.V82.abstract_type sigma g) in
+      let typ = EConstr.to_constr ~abort_on_undefined_evars:false sigma (Goal.V82.abstract_type sigma g) in
       Zooming.zoom_product_type (Environ.reset_context env) typ in
     let rec aux opts =
       match opts with

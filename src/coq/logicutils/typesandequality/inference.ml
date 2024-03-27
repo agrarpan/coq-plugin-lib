@@ -9,7 +9,7 @@ open Declarations
 let infer_type env sigma term =
   let eterm = EConstr.of_constr term in
   let sigma, typ = Typing.type_of ~refresh:true env sigma eterm in
-  sigma, EConstr.to_constr sigma typ
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false sigma typ
 
 (* Safely infer the sort of a type, updating the evar map *)
 let infer_sort env sigma term =

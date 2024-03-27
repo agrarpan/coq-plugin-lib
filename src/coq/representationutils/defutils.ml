@@ -76,7 +76,7 @@ let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : b
 (* Intern a term (for now, ignore the resulting evar_map) *)
 let intern env sigma t : evar_map * types =
   let (sigma, trm) = Constrintern.interp_constr_evars env sigma t in
-  sigma, EConstr.to_constr sigma trm
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false sigma trm
 
 (* Extern a term *)
 let extern env sigma t : constr_expr =
@@ -109,4 +109,4 @@ let constr_of_pglobal (glob, univs) =
 (* Safely instantiate a global reference, with proper universe handling *)
 let new_global sigma gref =
   let sigma, typ = Evarutil.new_global sigma gref in
-  sigma, EConstr.to_constr sigma typ
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false sigma typ
