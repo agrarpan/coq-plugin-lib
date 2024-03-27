@@ -34,21 +34,21 @@ let edeclare ident poly ~opaque sigma udecl body tyopt imps hook refresh =
   let env = Global.env () in
   let sigma =
     if refresh then
-      fst (Typing.type_of ~refresh:false env sigma body)
+        fst (Typing.type_of ~refresh:true env sigma body)
     else
       sigma
   in
   let sigma =
     if Option.has_some tyopt && refresh then
-      fst (Typing.type_of ~refresh:false env sigma (Option.get tyopt))
+      fst (Typing.type_of ~refresh:true env sigma (Option.get tyopt))
     else
       sigma
   in
   let sigma = Evd.minimize_universes sigma in (* todo: is this necessary/bad? *)
-  let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
+  let udecl = UState.default_univ_decl in
+  let scope = Declare.Global Declare.ImportDefaultBehavior in
   let kind = Decls.(IsDefinition Definition) in
-  DeclareDef.declare_definition ~name:ident ~scope ~kind ~opaque ~impargs:imps ~udecl:udecl ?hook:hook ~poly:poly ~types:tyopt ~body:body sigma
-  (* Check this change if something breaks later *)
+  Declare.declare_definition ~name:ident ~scope ~kind ~opaque:opaque ~impargs:imps ~udecl ~poly ~types:tyopt ~body:body sigma
 
 (* Define a new Coq term *)
 let define_term ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
