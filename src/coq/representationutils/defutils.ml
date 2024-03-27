@@ -45,10 +45,12 @@ let edeclare ident poly ~opaque sigma udecl body tyopt imps hook refresh =
       sigma
   in
   let sigma = Evd.minimize_universes sigma in (* todo: is this necessary/bad? *)
-  let udecl = UState.default_univ_decl in
+  let ubinders = Evd.universe_binders sigma in
+  let uctx = UState.of_binders ubinders in
+  let defent = Declare.definition_entry ~opaque:opaque (EConstr.to_constr ~abort_on_undefined_evars:false sigma body) in
   let scope = Declare.Global Declare.ImportDefaultBehavior in
   let kind = Decls.(IsDefinition Definition) in
-  Declare.declare_definition ~name:ident ~scope ~kind ~opaque:opaque ~impargs:imps ~udecl ~poly ~types:tyopt ~body:body sigma
+  Declare.declare_entry ~name:ident ~scope ~kind ~impargs:imps ~uctx:uctx defent
 
 (* Define a new Coq term *)
 let define_term ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
