@@ -5,7 +5,6 @@
 open Constr
 open Names
 open Evd
-open Recordops
 open Constrexpr
 open Constrextern
 
@@ -47,9 +46,11 @@ let edeclare ident poly ~opaque sigma udecl body tyopt imps hook refresh =
   let sigma = Evd.minimize_universes sigma in (* todo: is this necessary/bad? *)
   let udecl = UState.default_univ_decl in
   let sigma = (Evd.fold_undefined (fun x _ sigma -> Evd.remove sigma x) sigma) sigma in
-  let scope = Declare.Global Declare.ImportDefaultBehavior in
+  let scope = Locality.Global Locality.ImportDefaultBehavior in
   let kind = Decls.(IsDefinition Definition) in
-  Declare.declare_definition ~name:ident ~scope ~kind ~opaque:opaque ~impargs:imps ~udecl ~poly ~types:tyopt ~body:body sigma
+  let info = Declare.Info.make ~scope ~kind ~udecl ~poly () in
+  let cinfo = Declare.CInfo.make ~name:ident ~typ:tyopt () in
+  Declare.declare_definition ~info:info ~cinfo:cinfo ~opaque:opaque ~body:body sigma
 
 (* Define a new Coq term *)
 let define_term ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
@@ -63,7 +64,7 @@ let define_term ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) 
 let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
   let poly = Attributes.is_universe_polymorphism() in
   let udecl = UState.default_univ_decl in
-  let hook = DeclareDef.Hook.make (fun x -> let open DeclareDef.Hook.S in Canonical.declare_canonical_structure x.dref) in
+  let hook = Declare.Hook.make (fun x -> let open Declare.Hook.S in Canonical.declare_canonical_structure x.dref) in
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
   edeclare n poly ~opaque:false evm udecl etrm etyp [] (Some hook) refresh (* todo: check if last empty list is correct to pass *)

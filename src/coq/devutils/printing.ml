@@ -131,7 +131,7 @@ let rec term_as_string (env : env) (trm : types) =
           (Array.to_list (Array.map Context.binder_name ns))
           (Array.to_list ts)
           (Array.to_list ds))
-  | Case (ci, ct, m, bs) ->
+  | Case (ci, ct, _, m, bs) ->
      let (i, i_index) = ci.ci_ind in
      let mutind_body = lookup_mind i env in
      let ind_body = mutind_body.mind_packets.(i_index) in

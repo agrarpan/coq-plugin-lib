@@ -186,13 +186,13 @@ let declare_inductive typename consnames template univs nparam arity constypes =
   in
   let mind_entry =
     { mind_entry_record = None;
+      mind_entry_variance = None;
       mind_entry_finite = Declarations.Finite;
       mind_entry_params = params;
       mind_entry_inds = [ind_entry];
       mind_entry_universes = univs;
       mind_entry_private = None;
       mind_entry_template = template;
-      mind_entry_cumulative = false (* is this correct? *)
       }
   in
   let mind = DeclareInd.declare_mutual_inductive_with_eliminations mind_entry UnivNames.empty_binders [] in

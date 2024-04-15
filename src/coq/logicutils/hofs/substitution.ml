@@ -130,13 +130,13 @@ let rec subst_globals subst (term : constr) =
         constr_of_pglobal
       with _ ->
         match kind t with
-        | Case (ci, p, b, bl) ->
+        | Case (ci, p, iv, b, bl) ->
            let ci_ind' = destInd (subst_globals subst (mkInd ci.ci_ind)) in
            let ci' = { ci with ci_ind = fst ci_ind' } in 
            let b' = subst_globals subst b in
            let p' = subst_globals subst p in
            let bl' = Array.map (subst_globals subst) bl in
-           mkCase (ci', p', b', bl')               
+           mkCase (ci', p', iv, b', bl')               
         | _ -> t)
     (fun _ -> ())
     ()
