@@ -31,6 +31,8 @@ let edeclare ident poly ~opaque sigma udecl body tyopt imps hook =
      canonical structure resolution and what not.
    *)
   let env = Global.env () in
+  let sigma = fst (Typing.type_of env sigma body)
+  in
   let sigma =
     if Option.has_some tyopt then
       fst (Typing.type_of env sigma (Option.get tyopt))
