@@ -16,12 +16,12 @@ open Constrexpr
  * (Refreshing universes is REALLY costly)
  *)
 val define_term :
-  ?typ:types -> Id.t -> evar_map -> types -> bool -> GlobRef.t
+  ?typ:types -> Id.t -> evar_map -> types -> GlobRef.t
 (*
  * Like define_term, but for a canonical structure
  *)
 val define_canonical :
-  ?typ:types -> Id.t -> evar_map -> types -> bool -> GlobRef.t
+  ?typ:types -> Id.t -> evar_map -> types -> GlobRef.t
 
 (* --- Converting between representations --- *)
 

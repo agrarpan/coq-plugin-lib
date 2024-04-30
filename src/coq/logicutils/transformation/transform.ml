@@ -54,7 +54,7 @@ let transform_constant ident tr_constr const_body =
   let sigma = Evd.from_env env in
   let sigma, term' = tr_constr env sigma term in
   let sigma, type' = tr_constr env sigma const_body.const_type in
-  sigma, Globnames.destConstRef (define_term ~typ:type' ident sigma term' true)
+  sigma, Globnames.destConstRef (define_term ~typ:type' ident sigma term')
 
 (*
  * Declare a new inductive family under the given name with the transformed type

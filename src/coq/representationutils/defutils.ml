@@ -13,7 +13,7 @@ open Constrextern
 (* https://github.com/ybertot/plugin_tutorials/blob/master/tuto1/src/simple_declare.ml 
 
 TODO do we need to return the updated evar_map? *)
-let edeclare ident poly ~opaque sigma udecl body tyopt imps hook refresh =
+let edeclare ident poly ~opaque sigma udecl body tyopt imps hook =
   let open EConstr in
   (* XXX: "Standard" term construction combinators such as `mkApp`
      don't add any universe constraints that may be needed later for
@@ -31,17 +31,7 @@ let edeclare ident poly ~opaque sigma udecl body tyopt imps hook refresh =
      canonical structure resolution and what not.
    *)
   let env = Global.env () in
-  let sigma =
-    if refresh then
-        fst (Typing.type_of ~refresh:true env sigma body)
-    else
-      sigma
-  in
-  let sigma =
-    if Option.has_some tyopt && refresh then
-      fst (Typing.type_of ~refresh:true env sigma (Option.get tyopt))
-    else
-      sigma
+  let sigma = fst (Typing.type_of env sigma body)
   in
   let sigma = Evd.minimize_universes sigma in (* todo: is this necessary/bad? *)
   let udecl = UState.default_univ_decl in
@@ -53,21 +43,21 @@ let edeclare ident poly ~opaque sigma udecl body tyopt imps hook refresh =
   Declare.declare_definition ~info:info ~cinfo:cinfo ~opaque:opaque ~body:body sigma
 
 (* Define a new Coq term *)
-let define_term ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
+let define_term ?typ (n : Id.t) (evm : evar_map) (trm : types) =
   let poly = Attributes.is_universe_polymorphism() in
   let udecl = UState.default_univ_decl in
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
-  edeclare n poly ~opaque:false evm udecl etrm etyp [] None refresh
+  edeclare n poly ~opaque:false evm udecl etrm etyp [] None
 
 (* Define a Canonical Structure *)
-let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
+let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) =
   let poly = Attributes.is_universe_polymorphism() in
   let udecl = UState.default_univ_decl in
   let hook = Declare.Hook.make (fun x -> let open Declare.Hook.S in Canonical.declare_canonical_structure x.dref) in
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
-  edeclare n poly ~opaque:false evm udecl etrm etyp [] (Some hook) refresh (* todo: check if last empty list is correct to pass *)
+  edeclare n poly ~opaque:false evm udecl etrm etyp [] (Some hook)
 
 (* --- Converting between representations --- *)
 
