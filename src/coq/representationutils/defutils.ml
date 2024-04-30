@@ -31,8 +31,12 @@ let edeclare ident poly ~opaque sigma udecl body tyopt imps hook =
      canonical structure resolution and what not.
    *)
   let env = Global.env () in
-  let sigma = fst (Typing.type_of env sigma body)
-  in
+  let sigma =
+    if Option.has_some tyopt then
+      fst (Typing.type_of env sigma (Option.get tyopt))
+    else
+      sigma
+    in
   let sigma = Evd.minimize_universes sigma in (* todo: is this necessary/bad? *)
   let udecl = UState.default_univ_decl in
   let sigma = (Evd.fold_undefined (fun x _ sigma -> Evd.remove sigma x) sigma) sigma in
