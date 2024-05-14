@@ -14,7 +14,7 @@ open Defutils
 open Indutils
 open Substitution
 open Stateutils
-open Recordops
+open Structures
 open Record
 
 (* Type-sensitive transformation of terms *)
@@ -26,8 +26,7 @@ type constr_transformer = env -> evar_map -> constr -> evar_map * constr
  *)
 let force_constant_body const_body =
   match const_body.const_body with
-  | Def const_def ->
-    Mod_subst.force_constr const_def
+  | Def const_def -> const_def
   | OpaqueDef opaq ->
     fst (Opaqueproof.force_proof Library.indirect_accessor (Global.opaque_tables ()) opaq)
   | _ ->
@@ -88,16 +87,12 @@ let transform_inductive ident tr_constr (mind_body, ind_body as ind_specif) =
  *)
 let try_register_record mod_path (ind, ind') =
   try
-    let r = lookup_structure ind in
+    let r = Structure.find ind in
     Feedback.msg_info (Pp.str "Transformed a record");
-    let pks = r.s_PROJKIND in
-    let ps =
-      List.map
-        (Option.map (fun p -> Constant.make2 mod_path (Constant.label p)))
-        r.s_PROJ
-    in
+    let projections = r.projections in
     (try
-       Record.Internal.declare_structure_entry {s_CONST = (ind',1); s_EXPECTEDPARAM = r.s_EXPECTEDPARAM; s_PROJKIND = pks; s_PROJ = ps}
+       let struc = Structures.Structure.make (Global.env ()) ind' projections in
+       Record.Internal.declare_structure_entry struc;
      with _ ->
        Feedback.msg_warning
          (Pp.str "Failed to register projections for transformed record"))

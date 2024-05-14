@@ -157,11 +157,12 @@ let map_term_env_rec map_rec f d env sigma a trm =
      let sigma, fu' = map_rec env sigma a fu in
      let sigma, args' = map_rec_args map_rec env sigma a args in
      sigma, mkApp (fu', args')
-  | Case (ci, ct, iv, m, bs) ->
-     let sigma, ct' = map_rec env sigma a ct in
-     let sigma, m' = map_rec env sigma a m in
-     let sigma, bs' = map_rec_args map_rec env sigma a bs in
-     sigma, mkCase (ci, ct',iv, m', bs')
+  | Case (ci, u, pms, p, iv, c, brs) ->
+     let (ci, p, iv, c, brs) = Inductive.expand_case env (ci, u, pms, p, iv, c, brs) in
+     let sigma, ct' = map_rec env sigma a p in
+     let sigma, m' = map_rec env sigma a c in
+     let sigma, brs' = map_rec_args map_rec env sigma a brs in
+     sigma, mkCase ((Inductive.contract_case env) (ci, ct',iv, m', brs'))
   | Fix ((is, i), (ns, ts, ds)) ->
      let sigma, ts' = map_rec_args map_rec env sigma a ts in
      let sigma, ds' = map_rec_args (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
@@ -226,11 +227,12 @@ let map_subterms_env_rec map_rec f d env sigma a trm =
      let sigma, fus' = map_rec env sigma a fu in
      let sigma, argss' = map_rec_args_cartesian map_rec env sigma a args in
      sigma, combine_cartesian (fun fu' args' -> mkApp (fu', args')) fus' argss'
-  | Case (ci, ct, iv, m, bs) ->
-     let sigma, cts' = map_rec env sigma a ct in
-     let sigma, ms' = map_rec env sigma a m in
-     let sigma, bss' = map_rec_args_cartesian map_rec env sigma a bs in
-     sigma, combine_cartesian (fun ct' (m', bs') -> mkCase (ci, ct', iv, m', bs')) cts' (cartesian ms' bss')
+  | Case (ci, u, pms, p, iv, c, brs) ->
+     let (ci, p, iv, c, brs) = Inductive.expand_case env (ci, u, pms, p, iv, c, brs) in
+     let sigma, cts' = map_rec env sigma a p in
+     let sigma, ms' = map_rec env sigma a c in
+     let sigma, brs' = map_rec_args_cartesian map_rec env sigma a brs in
+     sigma, combine_cartesian (fun ct' (m', bs') -> mkCase (Inductive.contract_case env (ci, ct', iv, m', bs'))) cts' (cartesian ms' brs')
   | Fix ((is, i), (ns, ts, ds)) ->
      let sigma, tss' = map_rec_args_cartesian map_rec env sigma a ts in
      let sigma, dss' = map_rec_args_cartesian (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
@@ -322,11 +324,12 @@ let map_term_env_rec_shallow map_rec f d env sigma a trm =
          if isLambda t then sigma, t else map_rec env sigma a t
        in map_rec_args map_rec_shallow env sigma a args
      in sigma, mkApp (fu', args')
-  | Case (ci, ct, iv, m, bs) ->
-     let sigma, ct' = map_rec env sigma a ct in
-     let sigma, m' = map_rec env sigma a m in
-     let sigma, bs' = map_rec_args map_rec env sigma a bs in
-     sigma, mkCase (ci, ct', iv, m', bs')
+  | Case (ci, u, pms, p, iv, c, brs) ->
+     let (ci, p, iv, c, brs) = Inductive.expand_case env (ci, u, pms, p, iv, c, brs) in
+     let sigma, ct' = map_rec env sigma a p in
+     let sigma, m' = map_rec env sigma a c in
+     let sigma, brs' = map_rec_args map_rec env sigma a brs in
+     sigma, mkCase (Inductive.contract_case env (ci, ct', iv, m', brs'))
   | Fix ((is, i), (ns, ts, ds)) ->
      let sigma, ts' = map_rec_args map_rec env sigma a ts in
      let sigma, ds' = map_rec_args (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
@@ -498,11 +501,12 @@ let rec map_term_env_if_list p f d env sigma a trm =
        let fu' = map_rec env sigma a fu in
        let args' = Array.map (map_rec env sigma a) args in
        List.append fu' (List.flatten (Array.to_list args'))
-    | Case (ci, ct, iv, m, bs) ->
-       let ct' = map_rec env sigma a ct in
-       let m' = map_rec env sigma a m in
-       let bs' = Array.map (map_rec env sigma a) bs in
-       List.append ct' (List.append m' (List.flatten (Array.to_list bs')))
+    | Case (ci, u, pms, p, iv, c, brs) ->
+       let (ci, p, iv, c, brs) = Inductive.expand_case env (ci, u, pms, p, iv, c, brs) in
+       let ct' = map_rec env sigma a p in
+       let m' = map_rec env sigma a c in
+       let brs' = Array.map (map_rec env sigma a) brs in
+       List.append ct' (List.append m' (List.flatten (Array.to_list brs')))
     | Fix ((is, i), (ns, ts, ds)) ->
        let ts' = Array.map (map_rec env sigma a) ts in
        let ds' = Array.map (map_rec_env_fix map_rec d env sigma a ns ts) ds in
@@ -583,11 +587,12 @@ let rec exists_subterm_env p d env sigma (a : 'a) (trm : types) : evar_map * boo
          let sigma, fu' = map_rec env sigma a fu in
          let sigma, args' = exists_args map_rec env sigma a args in
          sigma, fu' || args'
-      | Case (ci, ct, iv, m, bs) ->
-         let sigma, ct' = map_rec env sigma a ct in
-         let sigma, m' = map_rec env sigma a m in
-         let sigma, bs' = exists_args map_rec env sigma a bs in
-         sigma, ct' || m' || bs'
+      | Case (ci, u, pms, p, iv, c, brs) ->
+         let (ci, p, iv, c, brs) = Inductive.expand_case env (ci, u, pms, p, iv, c, brs) in
+         let sigma, ct' = map_rec env sigma a p in
+         let sigma, m' = map_rec env sigma a c in
+         let sigma, brs' = exists_args map_rec env sigma a brs in
+         sigma, ct' || m' || brs'
       | Fix ((is, i), (ns, ts, ds)) ->
          let sigma, ts' = exists_args map_rec env sigma a ts in
          let sigma, ds' = exists_args map_rec env sigma a ds in

@@ -48,8 +48,7 @@ let lookup_pop (n : int) (env : env) =
 
 let force_constant_body const_body =
   match const_body.const_body with
-  | Def const_def ->
-    Mod_subst.force_constr const_def
+  | Def const_def -> const_def
   | OpaqueDef opaq ->
     fst (Opaqueproof.force_proof Library.indirect_accessor (Global.opaque_tables ()) opaq)
   | _ ->

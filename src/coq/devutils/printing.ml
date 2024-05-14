@@ -131,14 +131,15 @@ let rec term_as_string (env : env) (trm : types) =
           (Array.to_list (Array.map Context.binder_name ns))
           (Array.to_list ts)
           (Array.to_list ds))
-  | Case (ci, ct, _, m, bs) ->
+  | Case (ci, u, pms, p, iv, c, brs) ->
+     let (ci, p, iv, c, brs) = Inductive.expand_case env (ci, u, pms, p, iv, c, brs) in 
      let (i, i_index) = ci.ci_ind in
      let mutind_body = lookup_mind i env in
      let ind_body = mutind_body.mind_packets.(i_index) in
      Printf.sprintf
        "(match %s : %s with %s)"
-       (term_as_string env m)
-       (term_as_string env ct)
+       (term_as_string env c)
+       (term_as_string env p)
        (String.concat
           " "
           (Array.to_list
@@ -148,7 +149,7 @@ let rec term_as_string (env : env) (trm : types) =
                     "(case %s => %s)"
                     (Id.to_string (ind_body.mind_consnames.(c_i)))
                     (term_as_string env b))
-                bs)))
+                brs)))
   | Meta mv -> (* TODO *)
      Printf.sprintf "(%s)" (print_to_string print_constr trm)
   | CoFix (i, (ns, ts, ds)) -> (* TODO *)
