@@ -81,6 +81,9 @@ let transform_inductive ident tr_constr (mind_body, ind_body as ind_specif) =
        arity')
     (sigma, cons_types')
 
+let tr_projection mod_path (p: Structures.Structure.projection) : Structures.Structure.projection =
+  {p with proj_body = Option.map (fun x -> Constant.make2 mod_path (Constant.label x)) p.proj_body}
+
 (*
  * Try to register a transformed inductive type inside a module as a record,
  * if appropriate
@@ -90,8 +93,9 @@ let try_register_record mod_path (ind, ind') =
     let r = Structure.find ind in
     Feedback.msg_info (Pp.str "Transformed a record");
     let projections = r.projections in
+    let projections' = List.map (tr_projection mod_path) projections in
     (try
-       let struc = Structures.Structure.make (Global.env ()) ind' projections in
+       let struc = Structures.Structure.make (Global.env ()) ind' projections' in
        Record.Internal.declare_structure_entry struc;
      with _ ->
        Feedback.msg_warning
