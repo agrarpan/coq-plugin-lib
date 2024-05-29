@@ -191,13 +191,13 @@ let rec map_term_env f d env sigma a trm =
  * Update the argument of type 'a using the a supplied update function
  * Return a new term
  *)
-let map_term f d a trm =
+let map_term env f d a trm =
   snd
     (map_term_env
        (fun _ _ a t -> Evd.empty, f a t)
        d
-       empty_env
-       Evd.empty
+       env
+       (Evd.from_env env)
        a
        trm)
 
@@ -261,13 +261,13 @@ let rec map_subterms_env f d env sigma a trm : evar_map * types list =
  * Update the argument of type 'a using the a supplied update function
  * Return all combinations of new terms
  *)
-let map_subterms f d a trm : types list =
+let map_subterms env f d a trm : types list =
   snd
     (map_subterms_env
        (fun _ _ a t -> Evd.empty, f a t)
        d
-       empty_env
-       Evd.empty
+       env
+       (Evd.from_env env)
        a
        trm)
 
@@ -396,29 +396,29 @@ let rec map_term_env_if_lazy p f d env sigma a trm =
  * Update the argument of type 'a using the a supplied update function
  * Return a new term
  *)
-let map_term_if p f d a trm : types =
+let map_term_if env p f d a trm : types =
   snd
     (map_term_env_if
        (fun _ _ a t -> Evd.empty, p a t)
        (fun _ _ a t -> Evd.empty, f a t)
        d
-       empty_env
-       Evd.empty
+       env
+       (Evd.from_env env)
        a
        trm)
 
 (* Lazy version *)
-let map_term_if_lazy p f d a trm =
+let map_term_if_lazy env p f d a trm =
   snd
     (map_term_env_if_lazy
        (fun _ _ a t -> Evd.empty, p a t)
        (fun _ _ a t -> Evd.empty, f a t)
        d
-       empty_env
-       Evd.empty
+       env
+       (Evd.from_env env)
        a
        trm)
-                  
+       
 (*
  * Map a function over subterms of a term in an environment
  * Only apply the function when a proposition is true
@@ -609,18 +609,18 @@ let rec exists_subterm_env p d env sigma (a : 'a) (trm : types) : evar_map * boo
     sigma
                   
 (* exists_subterm_env with an empty environment *)
-let exists_subterm p d a t =
+let exists_subterm env p d a t =
   snd
     (exists_subterm_env
        (fun _ _ a t -> Evd.empty, p a t)
        d
-       empty_env
-       Evd.empty
+       env
+       (Evd.from_env env)
        a
        t)
 
 (* all constant subterms that match a stateless predicate *)
-let all_const_subterms p d a t =
+let all_const_subterms env p d a t =
   List.map
     snd
     (List.map
@@ -629,11 +629,11 @@ let all_const_subterms p d a t =
           (fun _ sigma a t -> sigma, isConst t && p a t)
           (fun en sigma _ t -> sigma, (en, t))
           d
-          empty_env
-          Evd.empty
+          env
+          (Evd.from_env env)
           a
           t))
-              
+
 (* --- Variations --- *)
 
 (* map env without any a *)
@@ -654,5 +654,5 @@ let map_unit mapper p f trm =
 (* Some simple combinations *)
 let map_unit_env_if = map_unit_env map_term_env_if
 let map_unit_env_if_lazy = map_unit_env map_term_env_if_lazy
-let map_unit_if = map_unit map_term_if
-let map_unit_if_lazy = map_unit map_term_if_lazy
+let map_unit_if env = map_unit (map_term_if env)
+let map_unit_if_lazy env = map_unit (map_term_if_lazy env)

@@ -87,7 +87,7 @@ let do_not_reduce (env : env) sigma (trm : types) =
 
 (* Remove all applications of the identity function *)
 let remove_identities (env : env) sigma (trm : types) =
-  sigma, map_term_if
+  sigma, map_term_if env
     (fun _ t -> applies_identity t)
     (fun _ t ->
       match kind t with
@@ -142,7 +142,7 @@ let rec remove_unused_hypos (env : env) sigma (trm : types) : evar_map * types =
         let num_rels = nb_rel env in
         let env_ill = push_rel CRD.(LocalAssum (n, mkRel (num_rels + 1))) env in
         let sigma, _ = infer_type env_ill sigma b' in
-        remove_unused_hypos env sigma (unshift b')
+        remove_unused_hypos env sigma (unshift env b')
       with _ ->
         sigma, mkLambda (n, t, b'))
   | _ ->

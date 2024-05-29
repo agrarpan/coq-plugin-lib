@@ -43,7 +43,7 @@ val all_typ_substs : (types * types) type_substitution
 (*
  * all_substs with eq_constr and the empty environment
  *)
-val all_eq_substs : (types * types) -> types -> types
+val all_eq_substs : env -> (types * types) -> types -> types
 
 (*
  * In an environment, substitute all subterms of a term that apply a
@@ -79,4 +79,4 @@ val all_typ_substs_combs : (types * types) comb_substitution
 type global_substitution = GlobRef.t Names.GlobRef.Map.t
 
 (* Substitute global references throughout a term *)
-val subst_globals : global_substitution -> constr -> constr
+val subst_globals : env -> global_substitution -> constr -> constr

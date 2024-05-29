@@ -46,7 +46,7 @@ let filter_ihs (env : env) sigma (cs : types list) =
   let env_no_ih = pop_rel_context 1 env in
   filter_state
     (fun c sigma ->
-      let c_no_ih = unshift c in
+      let c_no_ih = unshift env c in
       try
         bind
           (fun sigma -> infer_type env_no_ih sigma c_no_ih)
